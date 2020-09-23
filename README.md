@@ -6,7 +6,7 @@ Sending digitally signed image stream from raspberry pi to a pc in the local net
 
 
 
-A wide range of custom functions for YOLOv4, YOLOv4-tiny, YOLOv3, and YOLOv3-tiny implemented in TensorFlow, TFLite and TensorRT.
+Works with YOLOv4, YOLOv4-tiny, YOLOv3, and YOLOv3-tiny using TensorFlow, TFLite and TensorRT (only determnistic).
 
 ### Demo of Object Detection
 <p align="center"><img src="data/helpers/object_counter.gif"\></p>
