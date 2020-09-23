@@ -1,20 +1,21 @@
-# yolov4-custom-functions
+# Verification of outsourced Object Detection
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE)
+
+
+Sending digitally signed image stream from raspberry pi to a pc in the local network using Pub/Sub. The remote PC performs object detection with Tensorflow using Yolov4 or Yolov3 as model. Detected bounding boxes, classes and confidence get signed by the remote PC before sending them back to the raspberry Pi using sockets
+
+
 
 A wide range of custom functions for YOLOv4, YOLOv4-tiny, YOLOv3, and YOLOv3-tiny implemented in TensorFlow, TFLite and TensorRT.
 
-DISCLAIMER: This repository is very similar to my repository: [tensorflow-yolov4-tflite](https://github.com/theAIGuysCode/tensorflow-yolov4-tflite). I created this repository to explore coding custom functions to be implemented with YOLOv4, and they may worsen the overal speed of the application and make it not optimized in respect to time complexity. So if you want to run the most optimal YOLOv4 code with TensorFlow than head over to my other repository. This one is to explore cool customizations and applications that can be created using YOLOv4!
-
-### Demo of Object Counter Custom Function in Action!
+### Demo of Object Detection
 <p align="center"><img src="data/helpers/object_counter.gif"\></p>
 
 ## Currently Supported Custom Functions and Flags
 * [x] [Counting Objects (total objects and per class)](#counting)
 * [x] [Print Info About Each Detection (class, confidence, bounding box coordinates)](#info)
 * [x] [Crop Detections and Save as New Image](#crop)
-* [ ] [TODO: Apply Tesseract OCR to Detections to Extract Text]
 
-If there is a custom function you want to see created then create an issue in the issues tab and suggest it! If enough people suggest the same custom function I will add it quickly!
 
 ## Getting Started
 ### Conda (Recommended)
@@ -297,5 +298,10 @@ detect_video.py:
 
 ### References  
 
-   Huge shoutout goes to hunglc007 for creating the backbone of this repository:
-  * [tensorflow-yolov4-tflite](https://github.com/hunglc007/tensorflow-yolov4-tflite)
+   This repository builds on the following existing repositories:
+   https://github.com/theAIGuysCode/yolov4-custom-functions - To run Yolov4 with tensorflow
+   and get formatted outputs
+   
+   https://github.com/redlogo/RPi-Stream - To setup a raspberry Pi image stream and use a Coral Edge TPU for inferencing
+   
+   
