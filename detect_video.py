@@ -10,7 +10,7 @@ from absl import app, flags, logging
 from absl.flags import FLAGS
 import core.utils as utils
 from core.yolov4 import filter_boxes
-from core.functions import count_objects
+from core.functions import *
 from tensorflow.python.saved_model import tag_constants
 from PIL import Image
 import cv2
@@ -28,10 +28,11 @@ flags.DEFINE_string('video', './data/video/video.mp4', 'path to input video or s
 flags.DEFINE_string('output', None, 'path to output video')
 flags.DEFINE_string('output_format', 'XVID', 'codec used in VideoWriter when saving video to file')
 flags.DEFINE_float('iou', 0.45, 'iou threshold')
-flags.DEFINE_float('score', 0.25, 'score threshold')
+flags.DEFINE_float('score', 0.50, 'score threshold')
 flags.DEFINE_boolean('count', False, 'count objects within video')
 flags.DEFINE_boolean('dont_show', False, 'dont show video output')
 flags.DEFINE_boolean('info', False, 'print info on detections')
+flags.DEFINE_boolean('crop', False, 'crop detections from images')
 
 def main(_argv):
     config = ConfigProto()
@@ -40,7 +41,9 @@ def main(_argv):
     STRIDES, ANCHORS, NUM_CLASS, XYSCALE = utils.load_config(FLAGS)
     input_size = FLAGS.size
     video_path = FLAGS.video
-
+    # get video name by using split method
+    video_name = video_path.split('/')[-1]
+    video_name = video_name.split('.')[0]
     if FLAGS.framework == 'tflite':
         interpreter = tf.lite.Interpreter(model_path=FLAGS.weights)
         interpreter.allocate_tensors()
@@ -68,10 +71,12 @@ def main(_argv):
         codec = cv2.VideoWriter_fourcc(*FLAGS.output_format)
         out = cv2.VideoWriter(FLAGS.output, codec, fps, (width, height))
 
+    frame_num = 0
     while True:
         return_value, frame = vid.read()
         if return_value:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame_num += 1
             image = Image.fromarray(frame)
         else:
             print('Video has ended or failed, try a different video format!')
@@ -116,15 +121,42 @@ def main(_argv):
 
         pred_bbox = [bboxes, scores.numpy()[0], classes.numpy()[0], valid_detections.numpy()[0]]
 
+        # read in all class names from config
+        class_names = utils.read_class_names(cfg.YOLO.CLASSES)
+
+        # by default allow all classes in .names file
+        allowed_classes = list(class_names.values())
+        
+        # custom allowed classes (uncomment line below to allow detections for only people)
+        #allowed_classes = ['person']
+
+        # if crop flag is enabled, crop each detection and save it as new image
+        if FLAGS.crop:
+            crop_rate = 150 # capture images every so many frames (ex. crop photos every 150 frames)
+            crop_path = os.path.join(os.getcwd(), 'detections', 'crop', video_name)
+            try:
+                os.mkdir(crop_path)
+            except FileExistsError:
+                pass
+            if frame_num % crop_rate == 0:
+                final_path = os.path.join(crop_path, 'frame_' + str(frame_num))
+                try:
+                    os.mkdir(final_path)
+                except FileExistsError:
+                    pass          
+                crop_objects(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), pred_bbox, final_path, allowed_classes)
+            else:
+                pass
+
         if FLAGS.count:
             # count objects found
-            counted_classes = count_objects(pred_bbox, by_class = False)
+            counted_classes = count_objects(pred_bbox, by_class = False, allowed_classes=allowed_classes)
             # loop through dict and print
             for key, value in counted_classes.items():
                 print("Number of {}s: {}".format(key, value))
-            image = utils.draw_bbox(frame, pred_bbox, FLAGS.info, counted_classes)
+            image = utils.draw_bbox(frame, pred_bbox, FLAGS.info, counted_classes, allowed_classes=allowed_classes)
         else:
-            image = utils.draw_bbox(frame, pred_bbox, FLAGS.info)
+            image = utils.draw_bbox(frame, pred_bbox, FLAGS.info, allowed_classes=allowed_classes)
         
         fps = 1.0 / (time.time() - start_time)
         print("FPS: %.2f" % fps)

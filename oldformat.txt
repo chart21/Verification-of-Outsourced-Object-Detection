@@ -1,0 +1,64 @@
+       print(" receiver's fps: %4.1f"
+                  " receiver's time components: "
+                  " receiving %4.1f%% "
+                  " decompressing %4.1f%% "
+                  " verifying %4.1f%% "
+                  " preprocessing %4.1f%% "
+                  " model inference %4.1f%% "
+                  " postprocessing %4.1f%% "
+                  " replying %4.1f%% "
+                  " image show %4.1f%%"
+                  % (moving_average_fps.get_moving_average(),
+                     moving_average_receive_time.get_moving_average() / total_time * 100,
+                     moving_average_decompress_time.get_moving_average() / total_time * 100,
+                     moving_average_verify_image_sig_time.get_moving_average() / total_time * 100,
+                     moving_average_img_preprocessing_time.get_moving_average() / total_time * 100,                     
+                     moving_average_model_inference_time.get_moving_average() / total_time * 100,
+                     moving_average_img_postprocessing_time.get_moving_average() / total_time * 100,
+                     moving_average_reply_time.get_moving_average() / total_time * 100,
+                     moving_average_image_show_time.get_moving_average() / total_time * 100), end='\r')
+
+        
+            print(" receiver's latency in ms: %4.1f"
+                  " receiver's time components: ms"
+                  " receiving %4.1f ms"
+                  " decompressing %4.1f ms"
+                  " verifying %4.1f ms"
+                  " preprocessing %4.1f ms"
+                  " model inference %4.1f ms"
+                  " postprocessing %4.1f ms"
+                  " replying %4.1f ms"
+                  " image show %4.1f ms"
+                  % (moving_average_fps.get_moving_average(),
+                     moving_average_receive_time.get_moving_average()*1000,
+                     moving_average_decompress_time.get_moving_average()*1000,
+                     moving_average_verify_image_sig_time.get_moving_average()*1000,
+                     moving_average_img_preprocessing_time.get_moving_average()*1000,                     
+                     moving_average_model_inference_time.get_moving_average()*1000,
+                     moving_average_img_postprocessing_time.get_moving_average()*1000,
+                     moving_average_reply_time.get_moving_average()*1000,
+                     moving_average_image_show_time.get_moving_average()*1000), end='\r')
+
+
+
+            print(" receiver's latency in ms: %4.1f"
+                  " receiver's time components: ms"
+                  " receiving %4.1f ms"
+                  " decompressing %4.1f ms"
+                  " verifying %4.1f ms"
+                  " preprocessing %4.1f ms"
+                  " model inference %4.1f ms"
+                  " postprocessing %4.1f ms"
+                  " replying %4.1f ms"
+                  " image show %4.1f ms"
+                  % (moving_average_fps.get_moving_average(),
+                     
+                     
+                     
+                                        
+                     
+                     
+                     
+                    , end='\r')
+
+                    #artifically added

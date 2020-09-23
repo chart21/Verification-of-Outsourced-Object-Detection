@@ -26,10 +26,11 @@ flags.DEFINE_string('model', 'yolov4', 'yolov3 or yolov4')
 flags.DEFINE_list('images', './data/images/kite.jpg', 'path to input image')
 flags.DEFINE_string('output', './detections/', 'path to output folder')
 flags.DEFINE_float('iou', 0.45, 'iou threshold')
-flags.DEFINE_float('score', 0.25, 'score threshold')
+flags.DEFINE_float('score', 0.50, 'score threshold')
 flags.DEFINE_boolean('count', False, 'count objects within images')
 flags.DEFINE_boolean('dont_show', False, 'dont show image output')
 flags.DEFINE_boolean('info', False, 'print info on detections')
+flags.DEFINE_boolean('crop', False, 'crop detections from images')
 
 def main(_argv):
     config = ConfigProto()
@@ -52,6 +53,10 @@ def main(_argv):
 
         image_data = cv2.resize(original_image, (input_size, input_size))
         image_data = image_data / 255.
+        
+        # get image name by using split method
+        image_name = image_path.split('/')[-1]
+        image_name = image_name.split('.')[0]
 
         images_data = []
         for i in range(1):
@@ -95,15 +100,33 @@ def main(_argv):
         # hold all detection data in one variable
         pred_bbox = [bboxes, scores.numpy()[0], classes.numpy()[0], valid_detections.numpy()[0]]
 
+        # read in all class names from config
+        class_names = utils.read_class_names(cfg.YOLO.CLASSES)
+
+        # by default allow all classes in .names file
+        allowed_classes = list(class_names.values())
+        
+        # custom allowed classes (uncomment line below to allow detections for only people)
+        #allowed_classes = ['person']
+
+        # if crop flag is enabled, crop each detection and save it as new image
+        if FLAGS.crop:
+            crop_path = os.path.join(os.getcwd(), 'detections', 'crop', image_name)
+            try:
+                os.mkdir(crop_path)
+            except FileExistsError:
+                pass
+            crop_objects(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB), pred_bbox, crop_path, allowed_classes)
+
         if FLAGS.count:
             # count objects found
-            counted_classes = count_objects(pred_bbox, by_class = False)
+            counted_classes = count_objects(pred_bbox, by_class = False, allowed_classes=allowed_classes)
             # loop through dict and print
             for key, value in counted_classes.items():
                 print("Number of {}s: {}".format(key, value))
-            image = utils.draw_bbox(original_image, pred_bbox, FLAGS.info, counted_classes)
+            image = utils.draw_bbox(original_image, pred_bbox, FLAGS.info, counted_classes, allowed_classes=allowed_classes)
         else:
-            image = utils.draw_bbox(original_image, pred_bbox, FLAGS.info)
+            image = utils.draw_bbox(original_image, pred_bbox, FLAGS.info, allowed_classes=allowed_classes)
         
         image = Image.fromarray(image.astype(np.uint8))
         if not FLAGS.dont_show:
