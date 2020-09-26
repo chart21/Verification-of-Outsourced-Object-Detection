@@ -25,7 +25,7 @@ from tensorflow.compat.v1 import InteractiveSession
 #from utilities.render import Render
 from utilities.stats import MovingAverage
 
-
+import Responder as re
 
 import imagezmq
 import time
@@ -91,6 +91,11 @@ def main(_argv):
     time.sleep(1.0)
 
 
+    sendingPort = 1234
+
+    responder = re.Responder(hostname, sendingPort)
+
+
      # load model
     if framework == 'tflite':
             interpreter = tf.lite.Interpreter(model_path=weights)
@@ -128,7 +133,8 @@ def main(_argv):
     image_count = 0
 
 
-
+    a = 0
+    b = 0
 
     try:
         while True:
@@ -144,27 +150,36 @@ def main(_argv):
 
             decompressed_time = time.perf_counter()
 
-            print(name[-1])
+           # print(name[-1])
 
             # verify image
             vk.verify( bytes(name[:-1]), compressed)
             verify_time = time.perf_counter()
             
             # image preprocessing  
-            original_image = cv2.cvtColor(decompressedImage, cv2.COLOR_BGR2RGB)
 
-            image_data = cv2.resize(original_image, (input_size, input_size))
-            image_data = image_data / 255.
             
+           
+            original_image = cv2.cvtColor(decompressedImage, cv2.COLOR_BGR2RGB)
+          
+
+            image_data = cv2.resize(original_image, (input_size, input_size)) #0.4ms
+           
+            image_data = image_data / 255. #2.53ms
+           
             # get image name by using split method
             #image_name = image_path.split('/')[-1]
             #image_name = image_name.split('.')[0]
 
             images_data = []
+            
+            
+            
             for i in range(1):
                 images_data.append(image_data)
-            images_data = np.asarray(images_data).astype(np.float32)
-
+            
+            images_data = np.asarray(images_data).astype(np.float32) #3.15ms
+            
             image_preprocessing_time = time.perf_counter()
 
 
@@ -196,6 +211,10 @@ def main(_argv):
             #image postprocessing
 
             # run non max suppression on detections
+
+
+            h = time.perf_counter()
+
             boxes, scores, classes, valid_detections = tf.image.combined_non_max_suppression(
                 boxes=tf.reshape(boxes, (tf.shape(boxes)[0], -1, 1, 4)),
                 scores=tf.reshape(
@@ -204,22 +223,26 @@ def main(_argv):
                 max_total_size=50,
                 iou_threshold=iou,
                 score_threshold=score
-            )
-
-
+            ) # 1.2ms
             
 
             # format bounding boxes from normalized ymin, xmin, ymax, xmax ---> xmin, ymin, xmax, ymax
-            original_h, original_w, _ = original_image.shape
-            bboxes = utils.format_boxes(boxes.numpy()[0], original_h, original_w)
+            original_h, original_w, _ = original_image.shape 
+
+       
+
+            bboxes = utils.format_boxes(boxes.numpy()[0], original_h, original_w) #1ms
+
+            
             
             # hold all detection data in one variable
-            pred_bbox = [bboxes, scores.numpy()[0], classes.numpy()[0], valid_detections.numpy()[0]]
+            pred_bbox = [bboxes, scores.numpy()[0], classes.numpy()[0], valid_detections.numpy()[0]] 
 
             
-
             # by default allow all classes in .names file
             allowed_classes = list(class_names.values())
+
+
             
             # custom allowed classes (uncomment line below to allow detections for only people)
             #allowed_classes = ['person']
@@ -241,11 +264,15 @@ def main(_argv):
                 # loop through dict and print
                 for key, value in counted_classes.items():
                     print("Number of {}s: {}".format(key, value))
-                boxtext, image = utils.draw_bbox(original_image, pred_bbox, image_count, info, counted_classes, allowed_classes=allowed_classes)
+                boxtext, image = utils.draw_bbox(original_image, pred_bbox, name[-1], info, counted_classes, allowed_classes=allowed_classes)
             else:
-                boxtext, image = utils.draw_bbox(original_image, pred_bbox, image_count, info, allowed_classes=allowed_classes)
-            
-            image = Image.fromarray(image.astype(np.uint8))
+                boxtext, image = utils.draw_bbox(original_image, pred_bbox, name[-1], info, allowed_classes=allowed_classes) #0.5ms
+
+
+           
+            image = Image.fromarray(image.astype(np.uint8)) # 0.3ms
+
+           
 
             image_postprocessing_time = time.perf_counter()
             
@@ -253,8 +280,14 @@ def main(_argv):
 
             #print(boxtext)
 
-
+            #sender = imagezmq.ImageSender("tcp://*:{}".format(target_port), REQ_REP=False)
+            
             # send reply
+            responder.respond(boxtext)
+            #s = socket.socket()
+            #s.connect(('192.168.178.34',6001))
+            #s
+
 
             #if(info):
             #    image_hub.send_reply(boxtext)
@@ -273,16 +306,19 @@ def main(_argv):
 
             # display image
 
+            
             if not dont_show:
                 #image.show()
                 
                 image = cv2.cvtColor(np.array(image), cv2.COLOR_BGR2RGB)
                 cv2.imshow('raspberrypi', image)
             
-            image_showed_time = time.perf_counter()
+             
             
-            if cv2.waitKey(1) == ord('q'):
-                break
+                if cv2.waitKey(1) == ord('q'):
+                    break
+            
+            image_showed_time = time.perf_counter()
 
             # statistics
             
@@ -314,6 +350,11 @@ def main(_argv):
                         + moving_average_image_show_time.get_moving_average()
 
             
+            if(image_count == 800):
+                a = time.perf_counter()
+            if(image_count == 1200):
+                a = time.perf_counter() -a
+                print(a)
 
             #terminal prints
             if image_count % 20 == 0:
@@ -380,7 +421,8 @@ def main(_argv):
                 
                 
                 
-                
+            # x = time.perf_counter()
+            # print(x - replied_time)
                 
                 
                 

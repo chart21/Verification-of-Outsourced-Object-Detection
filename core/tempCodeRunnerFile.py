@@ -1,0 +1,1 @@
+Object found: {}, Confidence: {:.2f}, BBox Coords (xmin, ymin, xmax, ymax): {}, {}, {}, {} ;".format(class_name, score, coor[0], coor[1], coor[2], coor[3]

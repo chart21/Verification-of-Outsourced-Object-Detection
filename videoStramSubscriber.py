@@ -23,13 +23,11 @@ class VideoStreamSubscriber:
         self._thread.start()
 
     def receive(self, timeout=15.0):
-        a = 0        
-        waited = False
-        if not self._data_ready.is_set() :
-            a = time.perf_counter()
-            waited = True
-
-        
+        #a = 0        
+        #waited = False
+        #if not self._data_ready.is_set() :
+            #a = time.perf_counter()
+            #waited = True       
         
             
         flag = self._data_ready.wait(timeout=timeout)
@@ -37,8 +35,8 @@ class VideoStreamSubscriber:
             raise TimeoutError(
                 "Timeout while reading from subscriber tcp://{}:{}".format(self.hostname, self.port))
 
-        if waited :
-            print('Waited', (time.perf_counter() - a)*1000)
+        #if waited :
+            #print('Waited', (time.perf_counter() - a)*1000)
 
         self._data_ready.clear()
 
@@ -47,16 +45,18 @@ class VideoStreamSubscriber:
 
     def _run(self):
         receiver = imagezmq.ImageHub("tcp://{}:{}".format(self.hostname, self.port), REQ_REP=False)
-        countera = 0
-        counterb = 0
-        while not self._stop:
+        #countera = 0
+        #counterb = 0
+        while not self._stop:                      
             self._data = receiver.recv_jpg()
+            
+            
             #countera += 1
             #print(countera)
             #f = time.perf_counter()
-            time.sleep(0.05)
+            #time.sleep(0.05)
             #counterb += 1
-
+            
             #print(counterb, time.perf_counter() - f)
             self._data_ready.set()
             

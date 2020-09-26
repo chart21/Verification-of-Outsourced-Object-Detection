@@ -184,7 +184,7 @@ def draw_bbox(image, bboxes, counter, info = False, counted_classes = None, show
                     offset += height_ratio
     
     
-    return outputStr.encode(), image
+    return outputStr, image
     
 
 def bbox_iou(bboxes1, bboxes2):
