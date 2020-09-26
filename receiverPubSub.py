@@ -30,6 +30,7 @@ import Responder as re
 import imagezmq
 import time
 from ecdsa import VerifyingKey
+from ecdsa import SigningKey
 
 
 import videoStramSubscriber as vss
@@ -43,9 +44,14 @@ import sys
 
 
 def main(_argv):
-    vk = b'Y\xf8D\xe6o\xf9MZZh\x9e\xcb\xe0b\xb7h\xdb\\\xd7\x80\xd2S\xf5\x81\x92\xe8\x109r*U\xebT\x95\x0c\xf2\xf4(\x13%\x83\xb8\xfa;\xf04\xd3\xfb'
+    #vk = b'Y\xf8D\xe6o\xf9MZZh\x9e\xcb\xe0b\xb7h\xdb\\\xd7\x80\xd2S\xf5\x81\x92\xe8\x109r*U\xebT\x95\x0c\xf2\xf4(\x13%\x83\xb8\xfa;\xf04\xd3\xfb'
+    #vk = b'\x83\xac\xdcq8`\xa35s\n\x82\xf4\x9c\xb0Su\x1e\xe1\xf7M;\x81\x8d\x8aCfIdU\x1e5\xd4\x15W\xef\xb1\xcb\xbd&B\x08\xe5\x86\xac\xc0q\xb2'
+    vk = b"'\x83\xac\xdcq8`\xa35s\n\x82\xf4\x9c\xb0Su\x1e\xe1\xf7M;\x81\x8d\x8aCfIdU\x1e5\xd4\x15W\xef\xb1\xcb\xbd&B\x08\xe5\x86\xac\xc0q\xb2"
     vk = VerifyingKey.from_string(vk)
     vk.precompute()
+
+    sk = b'\x9dy\xd8I\x89\xf3!U\xa8\x19S\xe2\xc3\xd4\x99\x7f\x80\x9a!\x15\x8a\xc6lk'
+    sk = SigningKey.from_string(sk)
 
     
     config = ConfigProto()
@@ -125,6 +131,8 @@ def main(_argv):
     moving_average_reply_time = MovingAverage(moving_average_points)
     moving_average_image_show_time = MovingAverage(moving_average_points)
     moving_average_verify_image_sig_time = MovingAverage(moving_average_points)
+
+    moving_average_response_signing_time = MovingAverage(moving_average_points)
  
     
     
@@ -282,8 +290,18 @@ def main(_argv):
 
             #sender = imagezmq.ImageSender("tcp://*:{}".format(target_port), REQ_REP=False)
             
+
+            # sign message
+            sig = sk.sign_deterministic(boxtext.encode('latin1'))
+            #sig = list(sig)
+            sig = sig.decode('latin1')
             # send reply
-            responder.respond(boxtext)
+
+            
+            response_signing_time = time.perf_counter()
+            
+
+            responder.respond(boxtext + ';--' + sig)
             #s = socket.socket()
             #s.connect(('192.168.178.34',6001))
             #s
@@ -334,9 +352,11 @@ def main(_argv):
             
             moving_average_model_inference_time.add(model_inferenced_time - image_preprocessing_time)
 
-            moving_average_img_postprocessing_time.add(image_postprocessing_time - model_inferenced_time)
+            moving_average_img_postprocessing_time.add(image_postprocessing_time - model_inferenced_time)            
 
-            moving_average_reply_time.add(replied_time - image_postprocessing_time)
+            moving_average_response_signing_time.add(response_signing_time - image_postprocessing_time) #adjust for merkle root
+
+            moving_average_reply_time.add(replied_time - response_signing_time)
 
             moving_average_image_show_time.add(image_showed_time - replied_time)
             
@@ -346,6 +366,7 @@ def main(_argv):
                         + moving_average_img_preprocessing_time.get_moving_average() \
                         + moving_average_model_inference_time.get_moving_average() \
                         + moving_average_img_postprocessing_time.get_moving_average() \
+                        + moving_average_response_signing_time.get_moving_average() \
                         + moving_average_reply_time.get_moving_average() \
                         + moving_average_image_show_time.get_moving_average()
 
@@ -367,6 +388,7 @@ def main(_argv):
                     " preprocessing %4.1f (%4.1f%%) "
                     " model inference %4.1f (%4.1f%%) "
                     " postprocessing %4.1f (%4.1f%%) "
+                    " signing %4.1f (%4.1f%%) "
                     " replying %4.1f (%4.1f%%) "
                     " display %4.1f (%4.1f%%) "
                     % (
@@ -396,6 +418,10 @@ def main(_argv):
                         
                         moving_average_img_postprocessing_time.get_moving_average()*1000,
                         moving_average_img_postprocessing_time.get_moving_average() / total_time * 100,
+
+                        moving_average_verify_image_sig_time.get_moving_average()*1000,
+                         moving_average_verify_image_sig_time.get_moving_average() / total_time * 100,
+
                         
 
                         moving_average_reply_time.get_moving_average() *1000,

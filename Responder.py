@@ -20,7 +20,7 @@ class Responder:
         message = f'{len(message):<10}' + message
         #print(message)
 
-        self.responder.send(message.encode())
+        self.responder.send(message.encode('latin1'))
 
     def closeConnection(self):
         self.responder.closeConnection()
