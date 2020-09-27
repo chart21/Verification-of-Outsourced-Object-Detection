@@ -37,6 +37,8 @@ import videoStramSubscriber as vss
 
 import sys
 
+from merkletools import MerkleTools
+import json
 
 
 
@@ -47,13 +49,14 @@ def main(_argv):
     #vk = b'Y\xf8D\xe6o\xf9MZZh\x9e\xcb\xe0b\xb7h\xdb\\\xd7\x80\xd2S\xf5\x81\x92\xe8\x109r*U\xebT\x95\x0c\xf2\xf4(\x13%\x83\xb8\xfa;\xf04\xd3\xfb'
     #vk = b'\x83\xac\xdcq8`\xa35s\n\x82\xf4\x9c\xb0Su\x1e\xe1\xf7M;\x81\x8d\x8aCfIdU\x1e5\xd4\x15W\xef\xb1\xcb\xbd&B\x08\xe5\x86\xac\xc0q\xb2'
     vk = b"'\x83\xac\xdcq8`\xa35s\n\x82\xf4\x9c\xb0Su\x1e\xe1\xf7M;\x81\x8d\x8aCfIdU\x1e5\xd4\x15W\xef\xb1\xcb\xbd&B\x08\xe5\x86\xac\xc0q\xb2"
-    vk = VerifyingKey.from_string(vk)
+    vk = VerifyingKey.from_string(vk) #Verifying Key from outsourcer
     vk.precompute()
 
     sk = b'\x9dy\xd8I\x89\xf3!U\xa8\x19S\xe2\xc3\xd4\x99\x7f\x80\x9a!\x15\x8a\xc6lk'
-    sk = SigningKey.from_string(sk)
+    sk = SigningKey.from_string(sk) #Singing Key from server
 
-    
+    merkle_tree_interval = 127
+
     config = ConfigProto()
     config.gpu_options.allow_growth = True
     session = InteractiveSession(config=config)
@@ -143,6 +146,12 @@ def main(_argv):
 
     a = 0
     b = 0
+
+    if merkle_tree_interval > 0:
+        mt = MerkleTools()
+        interval_count = 0
+
+
 
     try:
         while True:
@@ -292,19 +301,32 @@ def main(_argv):
             
 
             # sign message
-            sig = sk.sign_deterministic(boxtext.encode('latin1'))
-            #sig = list(sig)
-            sig = sig.decode('latin1')
-            # send reply
 
-            
-            response_signing_time = time.perf_counter()
-            
+            if merkle_tree_interval == 0 :
+                sig = sk.sign_deterministic(boxtext.encode('latin1'))
+                #sig = list(sig)
+                sig = sig.decode('latin1')
+                # send reply
 
-            responder.respond(boxtext + ';--' + sig)
+                
+               
+                
+            
+                responder.respond(boxtext + ';--' + sig)
+            else :
+                mt.add_leaf(boxtext, True)
+                response = boxtext
+                if image_count > 0 and image_count % merkle_tree_interval == 0 :
+                    mt.make_tree()                    
+                    merkle_root = mt.get_merkle_root()
+                    sig = sk.sign_deterministic(merkle_root.encode('latin1'))
+                    response += ';--' + str(merkle_root) + ';--' + sig.decode('latin1')
+                    interval_count += 1
+                responder.respond(response)
             #s = socket.socket()
             #s.connect(('192.168.178.34',6001))
             #s
+            response_signing_time = time.perf_counter()
 
 
             #if(info):
@@ -419,8 +441,8 @@ def main(_argv):
                         moving_average_img_postprocessing_time.get_moving_average()*1000,
                         moving_average_img_postprocessing_time.get_moving_average() / total_time * 100,
 
-                        moving_average_verify_image_sig_time.get_moving_average()*1000,
-                         moving_average_verify_image_sig_time.get_moving_average() / total_time * 100,
+                        moving_average_response_signing_time.get_moving_average()*1000,
+                        moving_average_response_signing_time.get_moving_average() / total_time * 100,
 
                         
 
