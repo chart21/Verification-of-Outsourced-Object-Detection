@@ -6,8 +6,9 @@ import imagezmq
 import hmac
 import hashlib
 
-from ecdsa import SigningKey
+#from ecdsa import SigningKey
 
+from nacl.signing import SigningKey
 
 class Sender:
     
@@ -68,7 +69,8 @@ class Sender:
         #ECDSA
         #message = str(self.pk.sign(compressed_image))
         #message = self.pk.sign(compressed_image)
-        message = signature = self.pk.sign_deterministic(compressed_image)
+        #message = signature = self.pk.sign_deterministic(compressed_image)
+        message = self.pk.sign(bytes(compressed_image)).signature
         intMessage = list(message)
         #name = intMessage
         intMessage.append(name) #append image count

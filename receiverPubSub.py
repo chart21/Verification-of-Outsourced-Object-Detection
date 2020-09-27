@@ -29,8 +29,10 @@ import Responder as re
 
 import imagezmq
 import time
-from ecdsa import VerifyingKey
-from ecdsa import SigningKey
+#from ecdsa import VerifyingKey
+from nacl.signing import VerifyKey
+from nacl.signing import SigningKey
+#from ecdsa import SigningKey
 
 
 import videoStramSubscriber as vss
@@ -48,12 +50,14 @@ import json
 def main(_argv):
     #vk = b'Y\xf8D\xe6o\xf9MZZh\x9e\xcb\xe0b\xb7h\xdb\\\xd7\x80\xd2S\xf5\x81\x92\xe8\x109r*U\xebT\x95\x0c\xf2\xf4(\x13%\x83\xb8\xfa;\xf04\xd3\xfb'
     #vk = b'\x83\xac\xdcq8`\xa35s\n\x82\xf4\x9c\xb0Su\x1e\xe1\xf7M;\x81\x8d\x8aCfIdU\x1e5\xd4\x15W\xef\xb1\xcb\xbd&B\x08\xe5\x86\xac\xc0q\xb2'
-    vk = b"'\x83\xac\xdcq8`\xa35s\n\x82\xf4\x9c\xb0Su\x1e\xe1\xf7M;\x81\x8d\x8aCfIdU\x1e5\xd4\x15W\xef\xb1\xcb\xbd&B\x08\xe5\x86\xac\xc0q\xb2"
-    vk = VerifyingKey.from_string(vk) #Verifying Key from outsourcer
-    vk.precompute()
+    #vk = b"'\x83\xac\xdcq8`\xa35s\n\x82\xf4\x9c\xb0Su\x1e\xe1\xf7M;\x81\x8d\x8aCfIdU\x1e5\xd4\x15W\xef\xb1\xcb\xbd&B\x08\xe5\x86\xac\xc0q\xb2"
+    #vk = VerifyingKey.from_string(vk) #Verifying Key from outsourcer
+    #vk.precompute()
 
-    sk = b'\x9dy\xd8I\x89\xf3!U\xa8\x19S\xe2\xc3\xd4\x99\x7f\x80\x9a!\x15\x8a\xc6lk'
-    sk = SigningKey.from_string(sk) #Singing Key from server
+    vk = VerifyKey(b'e\x0fy\xfd\xe6\x16\x1f\xe0\x16B\xf2\xdb\x1d\x7f\xc9\xbcLCo\xa7\xa6c\x17\xbf\x8fo\xc8[\x07|bL')
+
+    sk = SigningKey(b'b\xc8\x8c\xa4\xd5\x82\x18cU\xfa\xdb\x0cg"\x06K\xa7\x01@\x9a\xf7\xa5Yn\x1b>|\x9a\xb6\x02\xaf&')
+    #sk = SigningKey.from_string(sk) #Singing Key from server
 
     merkle_tree_interval = 127
 
@@ -170,7 +174,9 @@ def main(_argv):
            # print(name[-1])
 
             # verify image
-            vk.verify( bytes(name[:-1]), compressed)
+            #vk.verify( bytes(name[:-1]), compressed)
+            #print(bytes(name[:-1]))
+            vk.verify( bytes(compressed), bytes(name[:-1]))
             verify_time = time.perf_counter()
             
             # image preprocessing  
@@ -300,10 +306,11 @@ def main(_argv):
             #sender = imagezmq.ImageSender("tcp://*:{}".format(target_port), REQ_REP=False)
             
 
-            # sign message
+            # sign message ->need to add image_count/interval_count (for merkle tree sig), contract hash to output and verificaton
 
             if merkle_tree_interval == 0 :
-                sig = sk.sign_deterministic(boxtext.encode('latin1'))
+                #sig = sk.sign_deterministic(boxtext.encode('latin1'))
+                sig = sk.sign(boxtext.encode('latin1')).signature
                 #sig = list(sig)
                 sig = sig.decode('latin1')
                 # send reply
@@ -319,9 +326,11 @@ def main(_argv):
                 if image_count > 0 and image_count % merkle_tree_interval == 0 :
                     mt.make_tree()                    
                     merkle_root = mt.get_merkle_root()
-                    sig = sk.sign_deterministic(merkle_root.encode('latin1'))
+                    #sig = sk.sign_deterministic(merkle_root.encode('latin1'))
+                    sig = sk.sign(merkle_root.encode('latin1')).signature
                     response += ';--' + str(merkle_root) + ';--' + sig.decode('latin1')
                     interval_count += 1
+                    mt = MerkleTools()
                 responder.respond(response)
             #s = socket.socket()
             #s.connect(('192.168.178.34',6001))

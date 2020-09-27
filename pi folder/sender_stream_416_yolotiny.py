@@ -5,9 +5,13 @@ from sender.sender_engine import Sender
 from utilities.stats import MovingAverage
 
 
-from ecdsa import SigningKey
 
-from ecdsa import VerifyingKey
+from nacl.signing import SigningKey
+from nacl.signing import VerifyKey
+
+#from ecdsa import SigningKey
+
+#from ecdsa import VerifyingKey
 
 from imageCounter import ImageCounter
 
@@ -24,12 +28,17 @@ def main():
     """
     # pk = SigningKey.generate()
     # privateKey = b'\x08\x8dv\xb3vB;\xb2\xb3\xca9\x94\x89f\xd6\xa9\x8d\x95\x10\x91\x12M\xadf'
-    privateKey = b'XN\xd3\xa6\\9\x98>P0S<\xbf\xcd\x93\xd1\x17\xb6\xf7&\xb0\xe9d\xad'
-    pk = SigningKey.from_string(privateKey)
+    #privateKey = b'XN\xd3\xa6\\9\x98>P0S<\xbf\xcd\x93\xd1\x17\xb6\xf7&\xb0\xe9d\xad'
+    #pk = SigningKey.from_string(privateKey)
 
-    vk = b'6\x9a\x00\x8d\xf5\xa1$\x86\x8e\xabp\xb5d6\xb7\x1cY\xb3\xf9\xfc7ji\xb0\xfe@\xab\x85\x7fI8CtI(\xcdb\x99y%\x05\x1d\x02H\xae\x9b\xd2\xdd'
-    vk = VerifyingKey.from_string(vk)
-    vk.precompute()
+
+    pk = SigningKey(b'\x9f\x1f\r\xab\xc6\x8bG [\xa6\x96\xf5\xeeJ\xc0"\xa3\x89\x18\xb4\xa2\xe0\xd1O\xa9\xce$\xe3\x98\xa9/\xf8')
+
+    vk = VerifyKey(b'\xe9\x919rce\xc9\x1a\xcfJ}\xa3\xee\x17q\x19\xbd\x0eu\xf4\xe0\xd5\x8a<\xc0\x81\x0c\xdbD\xf5;G')
+
+    #vk = b'6\x9a\x00\x8d\xf5\xa1$\x86\x8e\xabp\xb5d6\xb7\x1cY\xb3\xf9\xfc7ji\xb0\xfe@\xab\x85\x7fI8CtI(\xcdb\x99y%\x05\x1d\x02H\xae\x9b\xd2\xdd'
+    #vk = VerifyingKey.from_string(vk)
+    #vk.precompute()
 
     image_counter = ImageCounter()
     r = receiverlogic.Receiver(image_counter)
@@ -130,7 +139,7 @@ def main():
                     msg = o.split(';--')[0].encode('latin1')
                         # received_time = time.perf_counter() - receive_time
 
-                    vk.verify(sig, msg)
+                    vk.verify(msg, sig)
                     responses.append(msg)
                 #  receiverFrame = int(output[0][5:].split(':', 1)[0])
                 #  frames_behind = image_count - receiverFrame
@@ -143,8 +152,9 @@ def main():
                         if image_counter.getOutputCounter() >= merkle_tree_interval:
                             root_hash = o.split(';--')[1].encode('latin1')
                             sig = o.split(';--')[2].encode('latin1')
-                            match = vk.verify(sig, root_hash)
+                            match = vk.verify(root_hash, sig)
                             #print(match)
+                            interval_count += 1
 
 
                     except:
