@@ -18,11 +18,11 @@ class Sender:
     """
     __slots__ = 'target_ip', 'target_port', 'sender', 'quality', 'pk'
 
-    def __init__(self, target_ip, target_port, pk):
-        self.target_ip = target_ip
+    def __init__(self, target_port, pk, quality):
+        #self.target_ip = target_ip
         self.target_port = target_port
         self.pk = pk
-        self.quality = 95
+        self.quality = quality
         
 
         # imagezmq backend
@@ -48,7 +48,7 @@ class Sender:
         """
         self.sender.send_image(name, image)
 
-    def send_image_compressed(self, name, image):
+    def send_image_compressed(self, image_count, image, contractHash):
         """
         Send compressed image (jpg), high efficiency
         :param name: Name.
@@ -70,11 +70,16 @@ class Sender:
         #message = str(self.pk.sign(compressed_image))
         #message = self.pk.sign(compressed_image)
         #message = signature = self.pk.sign_deterministic(compressed_image)
-        message = self.pk.sign(bytes(compressed_image)).signature
+
+        inputs_to_be_signed = bytes(compressed_image) + contractHash + bytes(image_count) # sign contracthash, image, image_count
+
+        message = self.pk.sign(inputs_to_be_signed).signature
         intMessage = list(message)
         #name = intMessage
-        intMessage.append(name) #append image count
+        intMessage.append(image_count) #append image count
         
+        #intMessage.append(int(contractHash, 16)) #append contract hash, (hex casted to int)
+
         sign_image_time = time.perf_counter()
 
         # send image

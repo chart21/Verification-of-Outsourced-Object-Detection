@@ -8,13 +8,15 @@ from imageCounter import ImageCounter
 class Receiver:
 
     
-    def __init__(self, image_counter):
+    def __init__(self, image_counter, ip, port):
 
         self._q = queue.Queue()
         self._thread = threading.Thread(target=self._run, args=())
         self._thread.daemon = True
         self._thread.start()
         self._image_counter = image_counter
+        self._ip = ip
+        self._port = port
 
     def get(self):
         item = -1
@@ -39,7 +41,7 @@ class Receiver:
     def _run(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # now our endpoint knows about the OTHER endpoint.
-        self.s.bind(('192.168.178.34', 1234))
+        self.s.bind((self._ip, self._port))
         self.s.listen(0)
         self.clientsocket, self.address = self.s.accept()
         self.headersize = 10

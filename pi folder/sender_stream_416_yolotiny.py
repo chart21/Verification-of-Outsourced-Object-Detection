@@ -20,51 +20,65 @@ import receiverlogic
 from merkletools import MerkleTools
 import json
 
+from parameters import Helperfunctions
+from parameters import OutsourceContract
+from parameters import Parameters
+from parameters import ParticipantData
+from parameters import VerifierContract
+
+import sys
 
 def main():
     """
     main function interface
     :return: nothing
     """
-    # pk = SigningKey.generate()
-    # privateKey = b'\x08\x8dv\xb3vB;\xb2\xb3\xca9\x94\x89f\xd6\xa9\x8d\x95\x10\x91\x12M\xadf'
-    #privateKey = b'XN\xd3\xa6\\9\x98>P0S<\xbf\xcd\x93\xd1\x17\xb6\xf7&\xb0\xe9d\xad'
-    #pk = SigningKey.from_string(privateKey)
+    
 
 
-    pk = SigningKey(b'\x9f\x1f\r\xab\xc6\x8bG [\xa6\x96\xf5\xeeJ\xc0"\xa3\x89\x18\xb4\xa2\xe0\xd1O\xa9\xce$\xe3\x98\xa9/\xf8')
+    pk = SigningKey(Parameters.private_key_outsourcer)
 
-    vk = VerifyKey(b'\xe9\x919rce\xc9\x1a\xcfJ}\xa3\xee\x17q\x19\xbd\x0eu\xf4\xe0\xd5\x8a<\xc0\x81\x0c\xdbD\xf5;G')
+    #print(pk.verify_key)
 
-    #vk = b'6\x9a\x00\x8d\xf5\xa1$\x86\x8e\xabp\xb5d6\xb7\x1cY\xb3\xf9\xfc7ji\xb0\xfe@\xab\x85\x7fI8CtI(\xcdb\x99y%\x05\x1d\x02H\xae\x9b\xd2\xdd'
-    #vk = VerifyingKey.from_string(vk)
-    #vk.precompute()
+    vk = VerifyKey(OutsourceContract.public_key_contractor)
 
-    image_counter = ImageCounter()
-    r = receiverlogic.Receiver(image_counter)
+   
+    
 
     # video info
-    width = 416
-    height = 416
-    quality = 65
+    width = Parameters.input_size
+    height = Parameters.input_size
+    quality = Parameters.quality
 
-    # host computer info
-    target_ip = '192.168.178.23'
-    target_port = '5555'
+    
+    receiver_ip = Parameters.receiver_ip
+    receiver_port = Parameters.receiver_port
+
+
+    sending_port = Parameters.sending_port
 
     # statistics info
-    moving_average_points = 50
+    moving_average_points = Parameters.moving_average_points
+
+    
+
+    merkle_tree_interval = OutsourceContract.merkle_tree_interval
+
+    image_counter = ImageCounter()
+    r = receiverlogic.Receiver(image_counter, receiver_ip, receiver_port)
+
 
     a = 0
 
-    merkle_tree_interval = 127
+    contractHash = Helperfunctions.hashContract().encode('latin1')
+    print(contractHash)
 
     if merkle_tree_interval > 0:
         mt = MerkleTools()
         interval_count = 0
 
     # initialize sender
-    image_sender = Sender(target_ip, target_port, pk)
+    image_sender = Sender(sending_port, pk, quality)
     image_sender.set_quality(quality)
     print('RPi Stream -> Sender Initialized')
 
@@ -83,11 +97,7 @@ def main():
     moving_average_response_time = MovingAverage(moving_average_points)
     moving_average_receive_time = MovingAverage(moving_average_points)
     moving_average_verify_time = MovingAverage(moving_average_points)
-    # image_count = 0
-   # image_timer = []
-
-    # responseTime = -1
-
+    
     # streaming
     print('RPi Stream -> Start Streaming')
     while True:
@@ -100,81 +110,89 @@ def main():
 
         camera_time = time.perf_counter()
 
-        # send compressed image (compress + send)
+        
         compress_time, sign_time, send_time, = image_sender.send_image_compressed(
-            image_counter.getInputCounter(), image)
-        # image_timer.append(time.perf_counter())
+            image_counter.getInputCounter(), image, contractHash)
+       
 
-        # queuesize = r.getSize()
-      #  output = ''
-     #   try:
-     #       output, fetchDelay = r.get()
-     #       responseTime = time.perf_counter() - (fetchDelay -
-    #                                            output[1]) - image_timer[int(output[0][5:].split(':', 1)[0])]
-     #   except:
-     #       pass
-
-        # boundingBoxes = boundingBoxes.decode().split(';')
-        # if(len(boundingBoxes) != 2):
-        #    for b in boundingBoxes:
-        #        print(b)
-
-        # postprocessing_time = time.perf_counter()
-        # output =[]
         # verifying
 
         receive_time = time.perf_counter()
 
         responses = []
-        # received = False
-        # frames_behind = -1
-        try:
-            # output, fetchDelay = r.get()
-            output = r.getAll()
+        
+        output = r.getAll()
 
-            if merkle_tree_interval == 0:
-                for o in output:
-                        # received = True
+        if merkle_tree_interval == 0:
+            
+            
+            
+
+            
+            for o in output:
+                        
+                try:
                     sig = o.split(';--')[1].encode('latin1')
                     msg = o.split(';--')[0].encode('latin1')
-                        # received_time = time.perf_counter() - receive_time
+                except:
+                    sys.exit('Contract aborted: Contractor response is ill formated. Possible Consquences for Contractor: Blacklist, Bad Review')
+                        
+                try:
+                    vk.verify(msg + contractHash, sig)
+                except:
+                    sys.exit('Contract aborted: Contractor singature does not match response. Possible Consquences for Contractor: Blacklist, Bad Review')
+                responses.append(msg)
 
-                    vk.verify(msg, sig)
-                    responses.append(msg)
-                #  receiverFrame = int(output[0][5:].split(':', 1)[0])
-                #  frames_behind = image_count - receiverFrame
-            else:
+            
+        else:
+            
+            if image_counter.getNumberofOutputsReceived() > (merkle_tree_interval) * (interval_count+2):
+                   sys.exit('Contract aborted: No root hash received for current interval in time. Possible Consquences for Contractor: Blacklist, Bad Review, Refuse of Payment for images from current interval')
 
-                for o in output:
-                        # received = True
-                    msg = o.split(';--')[0].encode('latin1')
-                    try:
-                        if image_counter.getOutputCounter() >= merkle_tree_interval:
+
+            for o in output:
+                root_hash_received = False
+                msg = o.split(';--')[0].encode('latin1')
+
+                
+                if image_counter.getNumberofOutputsReceived() > (merkle_tree_interval-2) * (interval_count+1):
+                    try: #check if merkle root received
+                        
                             root_hash = o.split(';--')[1].encode('latin1')
                             sig = o.split(';--')[2].encode('latin1')
-                            match = vk.verify(root_hash, sig)
-                            #print(match)
-                            interval_count += 1
-
-
+                            root_hash_received = True
                     except:
                         pass
+                if root_hash_received == True: #if root has received, verify signature                    
+                    
+                    root_hash_received = False
+                    try:
 
-                    responses.append(msg)
+                        match = vk.verify(root_hash + bytes(interval_count) + contractHash, sig)
+                        interval_count += 1
+                        print(interval_count, image_counter.getNumberofOutputsReceived())
+                    except:
+                        sys.exit('Contract aborted: Contractor singature of root hash is ill formated. Possible Consquences for Contractor: Blacklist, Bad Review, Refuse of Payment for images from current interval')
+
+                            
+                       
 
 
-        except:
-            pass
+                
+
+                responses.append(msg)
+
+
+        
 
         verify_time = time.perf_counter()
-
-        for st in responses:
-            if len(st) > 200:
-                print(st)
+        if(OutsourceContract.criteria == 'Atleast 2 objects detected'):
+            for st in responses:
+                if len(st) > 200:
+                    print(st)
 
         frames_behind = image_counter.getFramesAhead()
-        # a = image_counter.getInputCounter(), image_counter.getOutputCounter(), image_counter.getFramesAhead()
-        # print(a)
+        
 
         if(image_counter.getNumberofOutputsReceived() == 800):
             a = time.perf_counter()
@@ -188,8 +206,7 @@ def main():
         moving_average_compress_time.add(compress_time)
         moving_average_sign_time.add(sign_time)
         moving_average_send_time.add(send_time)
-        # if received :
-        # moving_average_receive_time.add(received_time)
+       
         moving_average_verify_time.add(verify_time - receive_time)
         if(frames_behind != -1):
             moving_average_response_time.add(frames_behind)
