@@ -1,13 +1,14 @@
 class ImageCounter:
 
     # def __init__(self, hostname, port):
-    def __init__(self):
+    def __init__(self, maximum_number_of_frames_ahead):
         self._input_counter = 0
         self._output_counter = 0
-        self._frames_ahead = 0
+        self._frames_ahead = -1
         self._outputs_received =[] 
         self._new_output_frame = False
         self._number_of_outputs_received = 0
+        self._maximum_number_of_frames_ahead = maximum_number_of_frames_ahead
 
 
     def clearOutputs(self):
@@ -37,10 +38,17 @@ class ImageCounter:
 
     def getFramesAhead(self):
         if self._new_output_frame :
-            self._new_output_frame = False
-            return self._frames_ahead            
-        else:
-            return -1
+           self._new_output_frame = False
+           return self._frames_ahead            
+        #else:
+        #    if 
+        #    return -1
+        if self._maximum_number_of_frames_ahead < self._input_counter - self._output_counter:
+            return self._input_counter - self._output_counter
+
+        return -1
+
+    
 
         
 

@@ -27,6 +27,7 @@ class Parameters:
     framework = '' #tflite, tfRT, tf
     sendingPort = 1234
 
+    minimum_receive_rate_from_contractor = 0.9 #contractor has to reecive and acknowledge atleast x% of resonses. Otherwise contract is aborted.
     
     framework = ''
     tiny = True

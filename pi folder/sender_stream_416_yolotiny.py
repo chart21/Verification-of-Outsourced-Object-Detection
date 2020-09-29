@@ -64,14 +64,26 @@ def main():
 
     merkle_tree_interval = OutsourceContract.merkle_tree_interval
 
-    image_counter = ImageCounter()
+    maxmium_number_of_frames_ahead = Parameters.maxmium_number_of_frames_ahead
+    minimum_response_rate = Parameters.minimum_response_rate
+
+    image_counter = ImageCounter(maxmium_number_of_frames_ahead)
     r = receiverlogic.Receiver(image_counter, receiver_ip, receiver_port)
 
+    print('Waiting for contractor to connect ...')
+    start_listening_time = time.perf_counter()
+    while r.getConnectionEstablished() == False:
+        if time.perf_counter() - start_listening_time > 15:
+            sys.exit('Contract aborted: Contractor did not connect in time. Possible Consquences for Contractor: Blacklist, Bad Review')
+        time.sleep(0.5)
 
+
+    print('Connection with contractor established')
+                
     a = 0
 
     contractHash = Helperfunctions.hashContract().encode('latin1')
-    print(contractHash)
+    
 
     if merkle_tree_interval > 0:
         mt = MerkleTools()
@@ -101,9 +113,10 @@ def main():
     # streaming
     print('RPi Stream -> Start Streaming')
     while True:
+        
         start_time = time.perf_counter()
 
-        # time.sleep(0.005)
+        
 
         # capture image
         image = rpi_cam.get_image()
@@ -112,7 +125,7 @@ def main():
 
         
         compress_time, sign_time, send_time, = image_sender.send_image_compressed(
-            image_counter.getInputCounter(), image, contractHash)
+            image_counter.getInputCounter(), image, contractHash, image_counter.getNumberofOutputsReceived())
        
 
         # verifying
@@ -122,6 +135,8 @@ def main():
         responses = []
         
         output = r.getAll()
+        
+        
 
         if merkle_tree_interval == 0:
             
@@ -192,6 +207,23 @@ def main():
                     print(st)
 
         frames_behind = image_counter.getFramesAhead()
+
+        if frames_behind > maxmium_number_of_frames_ahead:
+            if image_counter.getInputCounter() > 1500:
+                sys.exit('Contract aborted: Contractor response delay rate is too high. Possible Consquences for Contractor: Bad Review, Blacklist') 
+
+        if(image_counter.getNumberofOutputsReceived() < image_counter.getInputCounter() * minimum_response_rate):
+            if image_counter.getInputCounter() > 1500:
+                sys.exit('Contract aborted: Contractor response rate is too low. Possible Consquences for Contractor: Bad Review, Blacklist') 
+
+        # if(image_counter.getInputCounter() - image_counter.getOutputCounter() < 60):
+        #     if image_counter.getInputCounter() > 1000:
+        #         print('b', image_counter.getOutputCounter() - image_counter.getInputCounter()) 
+
+        
+
+        # if frames_behind > 60:
+        #     print('b', frames_behind)
         
 
         if(image_counter.getNumberofOutputsReceived() == 800):

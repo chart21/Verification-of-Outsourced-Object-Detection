@@ -2,7 +2,10 @@ import socket
 import threading
 import time
 import queue
+import sys
+import os
 from imageCounter import ImageCounter
+
 
 
 class Receiver:
@@ -17,6 +20,7 @@ class Receiver:
         self._image_counter = image_counter
         self._ip = ip
         self._port = port
+        self._connection_established = False
 
     def get(self):
         item = -1
@@ -27,6 +31,8 @@ class Receiver:
             self._q.task_done()                    
             return item
 
+    def getConnectionEstablished(self):
+        return self._connection_established
 
     def getAll(self):
         item = [] 
@@ -41,9 +47,10 @@ class Receiver:
     def _run(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # now our endpoint knows about the OTHER endpoint.
-        self.s.bind((self._ip, self._port))
-        self.s.listen(0)
-        self.clientsocket, self.address = self.s.accept()
+        self.s.bind((self._ip, self._port))        
+        self.s.listen(0)        
+        self.clientsocket, self.address = self.s.accept()          
+        self._connection_established = True
         self.headersize = 10
 
 
@@ -71,4 +78,4 @@ class Receiver:
                     #if(len(full_msg) > 2) :
                     self._image_counter.setOutputCounter(int(full_msg[5:].split(':', 1)[0]))
                     new_msg = True
-                    # print(full_msg)
+                    

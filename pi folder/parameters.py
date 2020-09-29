@@ -38,6 +38,8 @@ class Parameters:
 
     #  '192.168.178.34'
     #port_receiving = 1234
+    maxmium_number_of_frames_ahead = 10 #if the frame delay of a contractor gets too high, the contract gets canceled
+    minimum_response_rate = 0.2 #atleast x% of images have to get a response
 
 
     

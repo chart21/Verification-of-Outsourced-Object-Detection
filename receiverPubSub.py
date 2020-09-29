@@ -29,7 +29,7 @@ from absl import app, flags, logging
 import tensorflow as tf
 import os
 # comment out below line to enable tensorflow outputs
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
 
 try:
@@ -71,6 +71,7 @@ def main(_argv):
     hostname = Parameters.ip_outsourcer  # Use to receive from other computer
     port = Parameters.port_outsourcer
     sendingPort = Parameters.sendingPort
+    minimum_receive_rate_from_contractor = Parameters.minimum_receive_rate_from_contractor
 
     contractHash = Helperfunctions.hashContract().encode('latin1')
     print(contractHash)
@@ -80,15 +81,7 @@ def main(_argv):
     config.gpu_options.allow_growth = True
     session = InteractiveSession(config=config)
 
-    # configure video stream receiver
-    receiver = vss.VideoStreamSubscriber(hostname, port)
-    print('RPi Stream -> Receiver Initialized')
-    time.sleep(1.0)
-
-    # configure responder
-    responder = re.Responder(hostname, sendingPort)
-
-    # load model
+     # load model
     if framework == 'tflite':
         interpreter = tf.lite.Interpreter(model_path=weights)
     else:
@@ -97,6 +90,16 @@ def main(_argv):
 
     # read in all class names from config
     class_names = utils.read_class_names(cfg.YOLO.CLASSES)
+
+    # configure video stream receiver
+    receiver = vss.VideoStreamSubscriber(hostname, port)
+    print('RPi Stream -> Receiver Initialized')
+    #time.sleep(1.0)
+
+    # configure responder
+    responder = re.Responder(hostname, sendingPort)
+
+   
 
     # statistics info
     moving_average_points = 50
@@ -131,10 +134,15 @@ def main(_argv):
         interval_count = 0
 
     while True:
-
+        
         start_time = time.perf_counter()
 
+
+        
         # receive image
+
+        #region
+
         # name[:-2] image signature, name
         name, compressed = receiver.receive()
         received_time = time.perf_counter()
@@ -143,20 +151,29 @@ def main(_argv):
         decompressedImage = cv2.imdecode(
             np.frombuffer(compressed, dtype='uint8'), -1)
 
+        
+        #endregion
+        
         decompressed_time = time.perf_counter()
 
-       # print(name[-1])
+       
 
-        # verify image  (verify if signature matches image, contract hash and image count )
+        # verify image  (verify if signature matches image, contract hash and image count, and number of outptuts received)
         try:
-            vk.verify(bytes(compressed) + contractHash + bytes(name[-1]), bytes(name[:-1]))
+            vk.verify(bytes(compressed) + contractHash + bytes(name[-2]) +bytes(name[-1]), bytes(name[:-2]))
         except:
             sys.exit('Contract aborted: Outsourcer singature does not match input. Possible Consquences for Outsourcer: Blacklist, Bad Review')
         # print(vrification_result)
+
+        if name[-1] < (image_count-2)*minimum_receive_rate_from_contractor:
+            sys.exit('Contract aborted: Outsourcer did not acknowledge enough ouputs. Possible Consquences for Outsourcer: Blacklist, Bad Review')
+
+        
         verify_time = time.perf_counter()
 
         # image preprocessing
 
+        #region
         original_image = cv2.cvtColor(decompressedImage, cv2.COLOR_BGR2RGB)
 
         image_data = cv2.resize(
@@ -171,10 +188,14 @@ def main(_argv):
 
         images_data = np.asarray(images_data).astype(np.float32)  # 3.15ms
 
+        #endregion
+
         image_preprocessing_time = time.perf_counter()
 
         # inference
 
+
+        #region
         if framework == 'tflite':
             interpreter.allocate_tensors()
             input_details = interpreter.get_input_details()
@@ -197,11 +218,14 @@ def main(_argv):
                 boxes = value[:, :, 0:4]
                 pred_conf = value[:, :, 4:]
 
+
+        #endregion
+
         model_inferenced_time = time.perf_counter()
 
         # image postprocessing
 
-        # run non max suppression on detections
+        #region
 
         h = time.perf_counter()
 
@@ -250,12 +274,14 @@ def main(_argv):
             for key, value in counted_classes.items():
                 print("Number of {}s: {}".format(key, value))
             boxtext, image = utils.draw_bbox(
-                original_image, pred_bbox, name[-1], info, counted_classes, allowed_classes=allowed_classes)
+                original_image, pred_bbox, name[-2], info, counted_classes, allowed_classes=allowed_classes)
         else:
             boxtext, image = utils.draw_bbox(
-                original_image, pred_bbox, name[-1], info, allowed_classes=allowed_classes)  # 0.5ms
+                original_image, pred_bbox, name[-2], info, allowed_classes=allowed_classes)  # 0.5ms
 
         image = Image.fromarray(image.astype(np.uint8))  # 0.3ms
+
+        #endregion
 
         image_postprocessing_time = time.perf_counter()
 

@@ -48,7 +48,7 @@ class Sender:
         """
         self.sender.send_image(name, image)
 
-    def send_image_compressed(self, image_count, image, contractHash):
+    def send_image_compressed(self, image_count, image, contractHash, number_of_outputs_received):
         """
         Send compressed image (jpg), high efficiency
         :param name: Name.
@@ -71,12 +71,14 @@ class Sender:
         #message = self.pk.sign(compressed_image)
         #message = signature = self.pk.sign_deterministic(compressed_image)
 
-        inputs_to_be_signed = bytes(compressed_image) + contractHash + bytes(image_count) # sign contracthash, image, image_count
+        inputs_to_be_signed = bytes(compressed_image) + contractHash + bytes(image_count) +bytes(number_of_outputs_received) # sign contracthash, image, image_count
 
         message = self.pk.sign(inputs_to_be_signed).signature
         intMessage = list(message)
         #name = intMessage
         intMessage.append(image_count) #append image count
+
+        intMessage.append(number_of_outputs_received) #append number of outputs received to commit to a paymnet
         
         #intMessage.append(int(contractHash, 16)) #append contract hash, (hex casted to int)
 
