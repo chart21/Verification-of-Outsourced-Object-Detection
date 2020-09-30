@@ -13,14 +13,14 @@ class Receiver:
     
     def __init__(self, image_counter, ip, port):
 
-        self._q = queue.Queue()
-        self._thread = threading.Thread(target=self._run, args=())
-        self._thread.daemon = True
-        self._thread.start()
+        self._q = queue.Queue()        
         self._image_counter = image_counter
         self._ip = ip
         self._port = port
         self._connection_established = False
+        self._thread = threading.Thread(target=self._run, args=())
+        self._thread.daemon = True
+        self._thread.start()
 
     def get(self):
         item = -1
@@ -49,7 +49,7 @@ class Receiver:
         # now our endpoint knows about the OTHER endpoint.
         self.s.bind((self._ip, self._port))        
         self.s.listen(0)        
-        self.clientsocket, self.address = self.s.accept()          
+        self.clientsocket, self.address = self.s.accept()                
         self._connection_established = True
         self.headersize = 10
 

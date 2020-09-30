@@ -21,25 +21,28 @@ class OutsourceContract:
 
 
 class Parameters:
-    receiver_ip = "192.168.178.34" #outsourcer
-    sending_port = 5555
+    receiver_ip = "192.168.178.34" #outsourcer, own ip to initialize image hub
+    sending_port = 5555 #port to send images to
+    sending_port_verifier = 5556
     private_key_outsourcer = b'\x9f\x1f\r\xab\xc6\x8bG [\xa6\x96\xf5\xeeJ\xc0"\xa3\x89\x18\xb4\xa2\xe0\xd1O\xa9\xce$\xe3\x98\xa9/\xf8'
     framework = '' #tflite, tfRT, tf
-    receiver_port = 1234
+    receiver_port = 1234 #port to receive replies from
+    receiver_port_verfier = 1235
 
     input_size = 416
     quality = 65
 
 
-    target_ip = '192.168.178.23'
-    target_port = '5555'
+    target_ip = '192.168.178.23' #contractor ip to receive replies from
+    target_ip_verifier = '192.168.178.36' #verifier ip to receive replies from
+    #target_port = '5555'
 
     moving_average_points = 50
 
     #  '192.168.178.34'
     #port_receiving = 1234
-    maxmium_number_of_frames_ahead = 15 #if the frame delay of a contractor gets too high, the contract gets canceled
-    minimum_response_rate = 0.2 #atleast x% of images have to get a response
+    maxmium_number_of_frames_ahead = 200000 #if the frame delay of a contractor gets too high, the contract gets canceled
+    minimum_response_rate = 0 #atleast x% of images have to get a response
     warm_up_time = 1500 #number of frames that vialtion of above QOE criteria are not leading to contract abortion (Can be used for handover)
 
 

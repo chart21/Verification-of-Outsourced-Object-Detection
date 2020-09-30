@@ -56,6 +56,12 @@ def main():
     receiver_ip = Parameters.receiver_ip
     receiver_port = Parameters.receiver_port
 
+    receiver_port_verifier = Parameters.receiver_port_verfier
+    
+    sending_port_verifier = Parameters.sending_port_verifier
+
+    verifier_ip = Parameters.target_ip_verifier
+
 
     sending_port = Parameters.sending_port
 
@@ -71,7 +77,11 @@ def main():
     warm_up_time = Parameters.warm_up_time
 
     image_counter = ImageCounter(maxmium_number_of_frames_ahead)
+    image_counter_verifier = ImageCounter(maxmium_number_of_frames_ahead)
+    
     r = receiverlogic.Receiver(image_counter, receiver_ip, receiver_port)
+
+    r_verifier = receiverlogic.Receiver(image_counter_verifier, receiver_ip, receiver_port_verifier)
 
     print('Waiting for contractor to connect ...')
     start_listening_time = time.perf_counter()
@@ -99,6 +109,12 @@ def main():
     image_sender = Sender(sending_port, pk, quality)
     image_sender.set_quality(quality)
     print('RPi Stream -> Sender Initialized')
+
+
+
+    image_sender_verifier = Sender(sending_port_verifier, pk, quality)
+    image_sender.set_quality(quality)
+    print('RPi Stream -> Verifier Sender Initialized')
 
     # initialize RPi camera
     rpi_cam = RPiCamera(width, height)
@@ -129,6 +145,11 @@ def main():
 
         camera_time = time.perf_counter()
 
+        
+        if image_counter.getInputCounter() % 10 == 0:
+            compress_time2, sign_time2, send_time2, = image_sender_verifier.send_image_compressed(
+                image_counter.getInputCounter(), image, contractHash, image_counter.getNumberofOutputsReceived())
+        
         if merkle_tree_interval == 0:
             compress_time, sign_time, send_time, = image_sender.send_image_compressed(
                 image_counter.getInputCounter(), image, contractHash, image_counter.getNumberofOutputsReceived())
@@ -276,7 +297,7 @@ def main():
         verify_time = time.perf_counter()
         if(OutsourceContract.criteria == 'Atleast 2 objects detected'):
             for st in responses:
-                if len(st) > 200:
+                if len(st) > 1000:
                     print(st)
 
         frames_behind = image_counter.getFramesAhead()
