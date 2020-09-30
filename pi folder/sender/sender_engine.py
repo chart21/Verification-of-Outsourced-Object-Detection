@@ -10,8 +10,8 @@ import hashlib
 
 from nacl.signing import SigningKey
 
+
 class Sender:
-    
 
     """
     Sender class to do actual sending related process
@@ -23,11 +23,10 @@ class Sender:
         self.target_port = target_port
         self.pk = pk
         self.quality = quality
-        
 
         # imagezmq backend
-        self.sender = imagezmq.ImageSender("tcp://*:{}".format(target_port), REQ_REP=False)
-        
+        self.sender = imagezmq.ImageSender(
+            "tcp://*:{}".format(target_port), REQ_REP=False)
 
     def set_quality(self, quality):
         """
@@ -48,6 +47,51 @@ class Sender:
         """
         self.sender.send_image(name, image)
 
+    def send_image_compressed_Merkle(self, image_count, image, contractHash, number_of_outputs_received, random_number, interval_count, time_to_challenge):
+        """
+        Send compressed image (jpg), high efficiency
+        :param name: Name.
+        :param image: Image input as numpy array.
+        :return: statistics of how long time it takes to compress, and to send image
+        """
+        start_time = time.perf_counter()
+
+        # compress image
+        _, compressed_image = cv2.imencode(
+            ".jpg", image, [int(cv2.IMWRITE_JPEG_QUALITY), self.quality])
+        compress_finish_time = time.perf_counter()
+
+        # sign contracthash, image, image_count, numbrt of outputs, radnom number
+        inputs_to_be_signed = bytes(compressed_image) + contractHash + bytes(
+            image_count) + bytes(number_of_outputs_received) + bytes(random_number) +bytes(interval_count) + bytes(time_to_challenge)
+
+        message = self.pk.sign(inputs_to_be_signed).signature
+        intMessage = list(message)  # [:-5]
+
+        intMessage.append(image_count)  # append image count [-5]
+
+        # append number of outputs received to commit to a payment [-4]
+        intMessage.append(number_of_outputs_received)
+
+        
+
+        # append random number that is used for the challenge [-3]
+        intMessage.append(random_number)
+
+        intMessage.append(interval_count) #[-2] 
+
+        intMessage.append(int(time_to_challenge)) #-1 
+
+        sign_image_time = time.perf_counter()
+
+        #print(intMessage[-2], intMessage[-3], number_of_outputs_received, image_count)
+
+        self.sender.send_jpg(intMessage, compressed_image)
+
+        send_time = time.perf_counter()
+
+        return compress_finish_time - start_time, sign_image_time - compress_finish_time,  send_time - sign_image_time
+
     def send_image_compressed(self, image_count, image, contractHash, number_of_outputs_received):
         """
         Send compressed image (jpg), high efficiency
@@ -58,36 +102,25 @@ class Sender:
         start_time = time.perf_counter()
 
         # compress image
-        _, compressed_image = cv2.imencode(".jpg", image, [int(cv2.IMWRITE_JPEG_QUALITY), self.quality])
+        _, compressed_image = cv2.imencode(
+            ".jpg", image, [int(cv2.IMWRITE_JPEG_QUALITY), self.quality])
         compress_finish_time = time.perf_counter()
-        
-        
-        #secret_key = b"NhqPtmdSJYdKjVHjA7PZj4Mge3R5YNiP1e3UZjInClVN65XAbvqqM6A7H5fATj0j"
-        #message = signature = hmac.new(secret_key, compressed_image, hashlib.sha256).hexdigest()
-        #print("signature = {0}".format(signature))
-        
-        #ECDSA
-        #message = str(self.pk.sign(compressed_image))
-        #message = self.pk.sign(compressed_image)
-        #message = signature = self.pk.sign_deterministic(compressed_image)
 
-        inputs_to_be_signed = bytes(compressed_image) + contractHash + bytes(image_count) +bytes(number_of_outputs_received) # sign contracthash, image, image_count
+        inputs_to_be_signed = bytes(compressed_image) + contractHash + bytes(image_count) + bytes(
+            number_of_outputs_received)  # sign contracthash, image, image_count
 
         message = self.pk.sign(inputs_to_be_signed).signature
         intMessage = list(message)
         #name = intMessage
-        intMessage.append(image_count) #append image count
+        intMessage.append(image_count)  # append image count
 
-        intMessage.append(number_of_outputs_received) #append number of outputs received to commit to a paymnet
-        
-        #intMessage.append(int(contractHash, 16)) #append contract hash, (hex casted to int)
+        # append number of outputs received to commit to a paymnet
+        intMessage.append(number_of_outputs_received)
 
         sign_image_time = time.perf_counter()
 
-        # send image
-        #boundingBoxes = self.sender.send_jpg(name, compressed_image)
         self.sender.send_jpg(intMessage, compressed_image)
-            
+
         send_time = time.perf_counter()
 
         return compress_finish_time - start_time, sign_image_time - compress_finish_time,  send_time - sign_image_time

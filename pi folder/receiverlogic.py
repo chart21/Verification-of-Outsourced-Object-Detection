@@ -60,6 +60,7 @@ class Receiver:
             msglen = 0
             new_msg = True
             while True:
+                
 
                 if new_msg:
                     msg = self.clientsocket.recv(10)
@@ -71,11 +72,14 @@ class Receiver:
                         pass
 
 
-                else:
+                else:                    
                     msg = self.clientsocket.recv(msglen)
                     full_msg = msg.decode('latin1')
                     self._q.put(full_msg)
                     #if(len(full_msg) > 2) :
                     self._image_counter.setOutputCounter(int(full_msg[5:].split(':', 1)[0]))
                     new_msg = True
+                    
+                    #print(self._image_counter.getNumberofOutputsReceived(), self._image_counter.getInputCounter(),full_msg[5:].split(':', 1)[0])
+                    
                     

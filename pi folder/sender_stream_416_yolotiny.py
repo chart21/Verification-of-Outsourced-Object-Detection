@@ -28,6 +28,8 @@ from parameters import VerifierContract
 
 import sys
 
+import random
+
 def main():
     """
     main function interface
@@ -66,6 +68,7 @@ def main():
 
     maxmium_number_of_frames_ahead = Parameters.maxmium_number_of_frames_ahead
     minimum_response_rate = Parameters.minimum_response_rate
+    warm_up_time = Parameters.warm_up_time
 
     image_counter = ImageCounter(maxmium_number_of_frames_ahead)
     r = receiverlogic.Receiver(image_counter, receiver_ip, receiver_port)
@@ -88,6 +91,9 @@ def main():
     if merkle_tree_interval > 0:
         mt = MerkleTools()
         interval_count = 0
+        time_to_challenge = False        
+        random_number = random.randint(0,merkle_tree_interval -1)
+        current_root_hash = ''
 
     # initialize sender
     image_sender = Sender(sending_port, pk, quality)
@@ -123,10 +129,13 @@ def main():
 
         camera_time = time.perf_counter()
 
-        
-        compress_time, sign_time, send_time, = image_sender.send_image_compressed(
-            image_counter.getInputCounter(), image, contractHash, image_counter.getNumberofOutputsReceived())
-       
+        if merkle_tree_interval == 0:
+            compress_time, sign_time, send_time, = image_sender.send_image_compressed(
+                image_counter.getInputCounter(), image, contractHash, image_counter.getNumberofOutputsReceived())
+        else:
+            
+            compress_time, sign_time, send_time = image_sender.send_image_compressed_Merkle(
+                image_counter.getInputCounter(), image, contractHash, image_counter.getNumberofOutputsReceived(), random_number, interval_count, time_to_challenge)
 
         # verifying
 
@@ -159,7 +168,7 @@ def main():
                 responses.append(msg)
 
             
-        else:
+        else: #Merkle tree verification is active
             
             if image_counter.getNumberofOutputsReceived() > (merkle_tree_interval) * (interval_count+2):
                    sys.exit('Contract aborted: No root hash received for current interval in time. Possible Consquences for Contractor: Blacklist, Bad Review, Refuse of Payment for images from current interval')
@@ -167,30 +176,94 @@ def main():
 
             for o in output:
                 root_hash_received = False
-                msg = o.split(';--')[0].encode('latin1')
+                msg = o.split(';--')[0].encode('latin1') #get output
 
                 
-                if image_counter.getNumberofOutputsReceived() > (merkle_tree_interval-2) * (interval_count+1):
+                
+                # section to check for proofs
+                if time_to_challenge == True: #If it's true then it's time to receive a challenge response
+                    proof_received = False #check if message structure indicates that it contains a proof
+                    if len(o.split(';--')) > 3:
+                        challenge_response = [] 
+                        try:
+                            signature = o.split(';--')[1].encode('latin1')
+                            challenge_response = o.split(';--')[2:]
+                            leaf_node = challenge_response[-2]
+                            root_node = challenge_response[-1]
+                            proof_string = challenge_response[0:-2]
+                            proofList = []
+                            for strings in proof_string:
+                                strings = strings.replace("'", "\"")
+                                proofList.append(json.loads(strings))
+                            proof_received = True
+                        except:
+                            pass
+                        if proof_received: #if message contains a proof
+                            if current_root_hash == root_node.encode('latin1'): #check if root node sent earlier matches current one
+                                mt = MerkleTools()   
+
+                                try:
+                                    #print(str(challenge_response).encode('latin1') + bytes(interval_count-1) + contractHash)
+                                    #print(challenge_response)
+                                    vk.verify(str(challenge_response).encode('latin1') + bytes(interval_count-1) + contractHash, signature)
+                                except:
+                                    sys.exit('Contract aborted: Contractor singature of challenge response is incorrect. Possible Consquences for Contractor: Blacklist, Bad Review, Refuse of Payment for images from current interval')
+
+                                try:    
+                                    merkle_proof_of_membership = mt.validate_proof(proofList, leaf_node, root_node)  # verify proof of memebrship
+                                    #print('Proof of membership for random sample in interval' + str(interval_count -1) + ' was successful')
+                                except:
+                                    merkle_proof_of_membership = False   
+
+                                if merkle_proof_of_membership == True:
+                                    time_to_challenge = False #all challenges passed
+                                else:
+                                    sys.exit('Contract aborted: Leaf is not contained in Merkle Tree. Possible Consquences for Contractor: Blacklist, Bad Review, Refuse of Payment for images from current interval, fine')
+
+
+                            else:
+                                sys.exit('Contract aborted: Contractor signature of root hash received at challenge response does not match previous signed root hash . Possible Consquences for Contractor: Blacklist, Bad Review, Refuse of Payment for images from current interval, fine')
+
+
+
+
+
+                    
+                    
+                #section to check for merkle roots
+                if image_counter.getNumberofOutputsReceived() > (merkle_tree_interval) * (interval_count+1): #if it's true then it's time to receive a new Merkle root
+                    
+                    if time_to_challenge == True:
+                        sys.exit('Contract aborted: Merkle Tree proof of membership challenge response was not received in time. Possible Consquences for Contractor: Blacklist, Bad Review, Refuse of Payment for images from current interval')
+
+                    
+                    
+                    
                     try: #check if merkle root received
                         
                             root_hash = o.split(';--')[1].encode('latin1')
                             sig = o.split(';--')[2].encode('latin1')
-                            root_hash_received = True
+                            if len(o.split(';--')) == 3:
+                                root_hash_received = True
                     except:
                         pass
-                if root_hash_received == True: #if root has received, verify signature                    
-                    
-                    root_hash_received = False
-                    try:
 
-                        match = vk.verify(root_hash + bytes(interval_count) + contractHash, sig)
-                        interval_count += 1
-                        print(interval_count, image_counter.getNumberofOutputsReceived())
-                    except:
-                        sys.exit('Contract aborted: Contractor singature of root hash is ill formated. Possible Consquences for Contractor: Blacklist, Bad Review, Refuse of Payment for images from current interval')
+                    if root_hash_received == True: #if root has received, verify signature                    
+                        
+                        root_hash_received = False
+                        time_to_challenge = True
+                        random_number = random.randint(0,merkle_tree_interval -1)
+                        try:
 
-                            
-                       
+                            match = vk.verify(root_hash + bytes(interval_count) + contractHash, sig)
+                            interval_count += 1
+                            current_root_hash = root_hash
+                            #print(interval_count, image_counter.getNumberofOutputsReceived())
+                        except:
+                            sys.exit('Contract aborted: Contractor singature of root hash is ill formated. Possible Consquences for Contractor: Blacklist, Bad Review, Refuse of Payment for images from current interval')
+
+                                
+                        
 
 
                 
@@ -208,12 +281,14 @@ def main():
 
         frames_behind = image_counter.getFramesAhead()
 
-        if frames_behind > maxmium_number_of_frames_ahead:
-            if image_counter.getInputCounter() > 1500:
+        if frames_behind > maxmium_number_of_frames_ahead:            
+            if image_counter.getInputCounter() > warm_up_time:
+                #print(image_counter.getInputCounter(), image_counter.getFramesAhead())           
+                
                 sys.exit('Contract aborted: Contractor response delay rate is too high. Possible Consquences for Contractor: Bad Review, Blacklist') 
 
         if(image_counter.getNumberofOutputsReceived() < image_counter.getInputCounter() * minimum_response_rate):
-            if image_counter.getInputCounter() > 1500:
+            if image_counter.getInputCounter() > warm_up_time:
                 sys.exit('Contract aborted: Contractor response rate is too low. Possible Consquences for Contractor: Bad Review, Blacklist') 
 
         # if(image_counter.getInputCounter() - image_counter.getOutputCounter() < 60):
@@ -232,6 +307,8 @@ def main():
             a = time.perf_counter() - a
             print(a)
 
+
+        
 
         # statistics
         moving_average_camera_time.add(camera_time - start_time)

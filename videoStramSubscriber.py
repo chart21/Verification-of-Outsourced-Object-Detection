@@ -33,7 +33,7 @@ class VideoStreamSubscriber:
         flag = self._data_ready.wait(timeout=timeout)
         if not flag:
             raise TimeoutError(
-                "Timeout while reading from subscriber tcp://{}:{}".format(self.hostname, self.port))
+                "Contract aborted: Outsourcer at tcp://{}:{}".format(self.hostname, self.port) + 'timed out. Possible Consquences for Outsourcer: Blacklist, Bad Review')
 
         #if waited :
             #print('Waited', (time.perf_counter() - a)*1000)

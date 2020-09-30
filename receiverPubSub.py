@@ -74,14 +74,20 @@ def main(_argv):
     minimum_receive_rate_from_contractor = Parameters.minimum_receive_rate_from_contractor
 
     contractHash = Helperfunctions.hashContract().encode('latin1')
-    print(contractHash)
+    # print(contractHash)
 
+     # configure video stream receiver
+    receiver = vss.VideoStreamSubscriber(hostname, port)
+    print('RPi Stream -> Receiver Initialized')
+    # time.sleep(1.0)
+   
+   
     # configure gpu usage
     config = ConfigProto()
     config.gpu_options.allow_growth = True
     session = InteractiveSession(config=config)
 
-     # load model
+    # load model
     if framework == 'tflite':
         interpreter = tf.lite.Interpreter(model_path=weights)
     else:
@@ -91,15 +97,10 @@ def main(_argv):
     # read in all class names from config
     class_names = utils.read_class_names(cfg.YOLO.CLASSES)
 
-    # configure video stream receiver
-    receiver = vss.VideoStreamSubscriber(hostname, port)
-    print('RPi Stream -> Receiver Initialized')
-    #time.sleep(1.0)
+  
 
     # configure responder
     responder = re.Responder(hostname, sendingPort)
-
-   
 
     # statistics info
     moving_average_points = 50
@@ -131,17 +132,22 @@ def main(_argv):
 
     if merkle_tree_interval > 0:
         mt = MerkleTools()
+        mtOld = MerkleTools()
         interval_count = 0
+        #rendundancy_counter = 0
+        #rendundancy_counter2 = 0
+        current_challenge = 1
+        merkle_root = ''
+        #stringsend = ''
+        last_challenge = 0
 
     while True:
-        
+
         start_time = time.perf_counter()
 
-
-        
         # receive image
 
-        #region
+        # region
 
         # name[:-2] image signature, name
         name, compressed = receiver.receive()
@@ -151,29 +157,53 @@ def main(_argv):
         decompressedImage = cv2.imdecode(
             np.frombuffer(compressed, dtype='uint8'), -1)
 
-        
-        #endregion
-        
+        # endregion
+
         decompressed_time = time.perf_counter()
 
-       
-
         # verify image  (verify if signature matches image, contract hash and image count, and number of outptuts received)
-        try:
-            vk.verify(bytes(compressed) + contractHash + bytes(name[-2]) +bytes(name[-1]), bytes(name[:-2]))
-        except:
-            sys.exit('Contract aborted: Outsourcer singature does not match input. Possible Consquences for Outsourcer: Blacklist, Bad Review')
-        # print(vrification_result)
+        if merkle_tree_interval == 0:
+            try:
+                vk.verify(bytes(compressed) + contractHash +
+                          bytes(name[-2]) + bytes(name[-1]), bytes(name[:-2]))
+            except:
+                sys.exit(
+                    'Contract aborted: Outsourcer signature does not match input. Possible Consquences for Outsourcer: Blacklist, Bad Review')
+            # print(vrification_result)
 
-        if name[-1] < (image_count-2)*minimum_receive_rate_from_contractor:
-            sys.exit('Contract aborted: Outsourcer did not acknowledge enough ouputs. Possible Consquences for Outsourcer: Blacklist, Bad Review')
+            if name[-1] < (image_count-2)*minimum_receive_rate_from_contractor:
+                sys.exit(
+                    'Contract aborted: Outsourcer did not acknowledge enough ouputs. Possible Consquences for Outsourcer: Blacklist, Bad Review')
 
-        
+        else:
+            # verify if signature matches image, contract hash, and image count, and number of intervals, and random number
+            try:
+                vk.verify(bytes(compressed) + contractHash +
+                          bytes(name[-5]) + bytes(name[-4]) + bytes(name[-3]) + bytes(name[-2]) + bytes(name[-1]),  bytes(name[:-5]))
+            except:
+                sys.exit(
+                    'Contract aborted: Outsourcer signature does not match input. Possible Consquences for Outsourcer: Blacklist, Bad Review')
+
+            if name[-4] < (image_count-2)*minimum_receive_rate_from_contractor:
+                sys.exit(
+                    'Contract aborted: Outsourcer did not acknowledge enough ouputs. Possible Consquences for Outsourcer: Blacklist, Bad Review')
+
+            outsorucer_signature = name[:-5]
+            outsourcer_image_count = name[-5]
+            outsourcer_number_of_outputs_received = name[-4]
+            outsourcer_random_number = name[-3]
+            outsourcer_interval_count = name[-2]
+            outsourcer_time_to_challenge = bool(name[-1])
+
+       
+       
+        #print(name[-2], image_count, name[-3])
+
         verify_time = time.perf_counter()
 
         # image preprocessing
 
-        #region
+        # region
         original_image = cv2.cvtColor(decompressedImage, cv2.COLOR_BGR2RGB)
 
         image_data = cv2.resize(
@@ -188,14 +218,13 @@ def main(_argv):
 
         images_data = np.asarray(images_data).astype(np.float32)  # 3.15ms
 
-        #endregion
+        # endregion
 
         image_preprocessing_time = time.perf_counter()
 
         # inference
 
-
-        #region
+        # region
         if framework == 'tflite':
             interpreter.allocate_tensors()
             input_details = interpreter.get_input_details()
@@ -218,14 +247,13 @@ def main(_argv):
                 boxes = value[:, :, 0:4]
                 pred_conf = value[:, :, 4:]
 
-
-        #endregion
+        # endregion
 
         model_inferenced_time = time.perf_counter()
 
         # image postprocessing
 
-        #region
+        # region
 
         h = time.perf_counter()
 
@@ -274,14 +302,19 @@ def main(_argv):
             for key, value in counted_classes.items():
                 print("Number of {}s: {}".format(key, value))
             boxtext, image = utils.draw_bbox(
-                original_image, pred_bbox, name[-2], info, counted_classes, allowed_classes=allowed_classes)
+                original_image, pred_bbox, info, counted_classes, allowed_classes=allowed_classes)
         else:
             boxtext, image = utils.draw_bbox(
-                original_image, pred_bbox, name[-2], info, allowed_classes=allowed_classes)  # 0.5ms
+                original_image, pred_bbox, info, allowed_classes=allowed_classes)  # 0.5ms
 
         image = Image.fromarray(image.astype(np.uint8))  # 0.3ms
 
-        #endregion
+        # endregion
+
+        if merkle_tree_interval == 0:
+            boxtext = 'Image' + str(name[-2]) + ':;' + boxtext
+        else:
+            boxtext = 'Image' + str(outsourcer_image_count) + ':;' + boxtext
 
         image_postprocessing_time = time.perf_counter()
 
@@ -298,20 +331,85 @@ def main(_argv):
             responder.respond(boxtext + ';--' + sig)
 
         else:
+            # print(image_count)
             mt.add_leaf(boxtext, True)
             response = boxtext
-            if image_count > 1 and (image_count+1) % merkle_tree_interval == 0:
+
+            # time to send a new merkle root
+            if image_count > 1 and image_count % merkle_tree_interval == 0:
+                a = time.perf_counter()
+                #rendundancy_counter = 2
                 mt.make_tree()
                 merkle_root = mt.get_merkle_root()
-                #sig = sk.sign_deterministic(merkle_root.encode('latin1'))
-                sig = sk.sign(merkle_root.encode('latin1') + bytes(interval_count) + contractHash).signature
+
+                sig = sk.sign(merkle_root.encode(
+                    'latin1') + bytes(interval_count) + contractHash).signature  # sign merkle root
+
+                # resond with merkle root
                 response += ';--' + str(merkle_root) + \
                     ';--' + sig.decode('latin1')
+
                 interval_count += 1
-                mt = MerkleTools()
+                mtOld = mt  # save old merkle tree for challenge
+
+                mt = MerkleTools()  # construct new merkle tree for next interval
+                te = time.perf_counter()-a
+               # print('1', te, image_count)
+            
+            else:
+                if interval_count > outsourcer_image_count : #if this is true then the outsourcer has not received the merkle root yet -> send again
+
+                    sig = sk.sign(merkle_root.encode(
+                    'latin1') + bytes(interval_count) + contractHash).signature  # sign merkle root
+
+                    response += ';--' + str(merkle_root) + \
+                    ';--' + sig.decode('latin1')
+
+                   # print('2', image_count)
+
+                else: # in this case outsourcer has confirmed to have recieved the merkle root
+
+                    if outsourcer_time_to_challenge and image_count - last_challenge > 3: #in this case outsourcer has sent a challenge to meet with the old merkle tree, give outsourcer 3 frames time to confirm challenge received before sending again
+                        last_challenge = image_count
+                        proofs = mtOld.get_proof(outsourcer_random_number)
+                        stringsend = ''
+                        for proof in proofs:
+                            stringsend += ';--'  # indicate start of proof
+                            stringsend += proof.__str__()  # send proof
+
+                        stringsend += ';--'
+                        # send leaf
+                        stringsend += mtOld.get_leaf(outsourcer_random_number)
+                        stringsend += ';--'
+                        stringsend += mtOld.get_merkle_root()  # send root
+
+                        stringarr = []
+                        stringarr = stringsend.split(';--')
+                        
+                        leaf_node = stringarr[-2]
+                        root_node = stringarr[-1]
+                        proof_string = stringarr[0:-2]
+
+                        sig = sk.sign(str(stringarr[1:]).encode('latin1') + bytes(interval_count-1) + contractHash).signature  # sign proof and contract details
+                        #print(str(stringarr).encode('latin1') + bytes(interval_count-1) + contractHash)
+                        #print(stringarr)
+                            # attach signature
+                        response += ';--' + sig.decode('latin1')
+                        response += stringsend  # attach challenge response to response
+
+                        
+
+
+                        
+
+                       # print('3', te, image_count)
+
+
             responder.respond(response)
 
         response_signing_time = time.perf_counter()
+
+       # print(response_signing_time- image_postprocessing_time)
 
         replied_time = time.perf_counter()
 
@@ -324,7 +422,8 @@ def main(_argv):
             cv2.imshow('raspberrypi', image)
 
             if cv2.waitKey(1) == ord('q'):
-                sys.exit('Contract aborted: Contractor ended contract according to custom')
+                sys.exit(
+                    'Contract aborted: Contractor ended contract according to custom')
 
         image_showed_time = time.perf_counter()
 

@@ -134,7 +134,7 @@ def format_boxes(bboxes, image_height, image_width):
         box[0], box[1], box[2], box[3] = xmin, ymin, xmax, ymax
     return bboxes
 
-def draw_bbox(image, bboxes, counter, info = False, counted_classes = None, show_label=True, allowed_classes=list(read_class_names(cfg.YOLO.CLASSES).values())):
+def draw_bbox(image, bboxes, info = False, counted_classes = None, show_label=True, allowed_classes=list(read_class_names(cfg.YOLO.CLASSES).values())):
     classes = read_class_names(cfg.YOLO.CLASSES)
     num_classes = len(classes)
     image_h, image_w, _ = image.shape
@@ -147,7 +147,8 @@ def draw_bbox(image, bboxes, counter, info = False, counted_classes = None, show
     random.seed(None)
 
     out_boxes, out_scores, out_classes, num_boxes = bboxes
-    outputStr = 'Image' + str(counter) + ':;'
+    #outputStr = 'Image' + str(counter) + ':;'
+    outputStr = ''
     for i in range(num_boxes):
         if int(out_classes[i]) < 0 or int(out_classes[i]) > num_classes: continue
         coor = out_boxes[i]
