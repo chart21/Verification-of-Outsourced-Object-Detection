@@ -61,8 +61,6 @@ def main():
     # statistics info
     moving_average_points = Parameters.moving_average_points
 
-    
-
     merkle_tree_interval = OutsourceContract.merkle_tree_interval
 
     maxmium_number_of_frames_ahead = Parameters.maxmium_number_of_frames_ahead
@@ -92,10 +90,17 @@ def main():
 
     a = 0
 
-    outsourcerSample = (-1, '-1', '') #saves input_counter, response, signautre of current sample
-    verifierSample = (-1, '-1', '') # saves input_counter, response, signature of current sample
+    # saves input_counter, response, signautre of current sample
+    outsourcerSample = (-1, '-1', '')
+    # saves input_counter, response, signature of current sample
+    verifierSample = (-1, '-1', '')
 
-    lastSample = -1 #last sample index that was compared
+    outsourcer_sample_dict = {}
+    verifier_sample_dict = {}
+
+    lastSample = -1  # last sample index that was compared
+    #lastVerifierSample = -1 #
+    #lastOutsourcerSample = -1
 
     contractHash = Helperfunctions.hashContract().encode('latin1')
 
@@ -154,9 +159,7 @@ def main():
         camera_time = time.perf_counter()
 
         # if index is at random sample, send random sample to verifier
-        if sampling_index == image_counter.getInputCounter():
-            compress_time2, sign_time2, send_time2, = image_sender_verifier.send_image_compressed(
-                image_counter.getInputCounter(), image, verifier_contract_hash, image_counter_verifier.getNumberofOutputsReceived())
+      
 
         if merkle_tree_interval == 0:
             compress_time, sign_time, send_time, = image_sender.send_image_compressed(
@@ -166,12 +169,20 @@ def main():
             compress_time, sign_time, send_time = image_sender.send_image_compressed_Merkle(
                 image_counter.getInputCounter(), image, contractHash, image_counter.getNumberofOutputsReceived(), random_number, interval_count, time_to_challenge)
 
+        
+        # reuse compressed image and just add signature
+          #if sampling_index == image_counter.getInputCounter() or sampling_index + sampling_interval < image_counter.getInputCounter(): # only for high frequency to reduce receive time
+        if sampling_index == image_counter.getInputCounter():
+            compress_time2, sign_time2, send_time2, = image_sender_verifier.send_image_compressed(
+                image_counter.getInputCounter(), image, verifier_contract_hash, image_counter_verifier.getNumberofOutputsReceived())
+        
+        
         # verifying
 
         receive_time = time.perf_counter()
 
         responses = []
-        signatures_outsourcer = [] 
+        signatures_outsourcer = []
 
         output = r.getAll()
 
@@ -287,11 +298,8 @@ def main():
                 responses.append(msg)
                 signatures_outsourcer.append(sig)
 
-        
-        
-        
         responses_verifier = []
-        signatures_verifier = []  
+        signatures_verifier = []
         output_verifier = r_verifier.getAll()
 
         for o in output_verifier:
@@ -311,36 +319,63 @@ def main():
             responses_verifier.append(msg)
             signatures_verifier.append(sig)
 
-        
-        
-        
-        
-        
-        if image_counter.getNumberofOutputsReceived() % sampling_interval == 0:  # pick new random sample
-
-            # random_number = random.randint(0,sampling_interval -1 - maxmium_number_of_frames_ahead)
-            random_number = random.randint(0, sampling_interval - 1)
-            sampling_index = random_number + image_counter.getInputCounter()
-
+        # make sure verifier has even computed a new output before assigning a new sample, otherwise it's possible to never compare samples
         if image_counter.getOutputCounter() == sampling_index and len(responses) > 0:
-            outsourcerSample = (sampling_index, responses[-1], signatures_outsourcer[-1]  )
-            
+            if lastSample != image_counter_verifier.getOutputCounter():
+                outsourcer_sample_dict[sampling_index] = (
+                    sampling_index, responses[-1], signatures_outsourcer[-1])
+            else:
+                # add to key value store
+                outsourcer_sample_dict[sampling_index] = (
+                    sampling_index, responses[-1], signatures_outsourcer[-1])
 
         if image_counter_verifier.getOutputCounter() == sampling_index and len(responses_verifier) > 0:
-            verifierSample = (sampling_index, responses_verifier[-1], signatures_verifier[-1]  )
+            # make sure outsourcer has even computed a new output beofre assigning a new sample, otherwise it's possible to never compare samples
+            if lastSample != image_counter.getOutputCounter():
+                verifier_sample_dict[sampling_index] = (
+                    sampling_index, responses_verifier[-1], signatures_verifier[-1])
+            else:
+                # add to key value store
+                verifier_sample_dict[sampling_index] = (
+                    sampling_index, responses[-1], signatures_verifier[-1])
 
+        # sample_checked = False
+        # if outsourcerSample[0] == verifierSample[0]:
+        #     sample_checked = True
+        #     #compare resp
+        #     if lastSample != outsourcerSample[0]:
+        #         lastSample = outsourcerSample[0]
+        #         if outsourcerSample[1] == verifierSample[1]:
+        #             print(True, outsourcerSample[1])
+        #         else:
+        #             print(False, outsourcerSample[1], verifierSample[1])
 
-        if outsourcerSample[0] == verifierSample[0]:
-            #compare resp  
-            if lastSample != outsourcerSample[0]:
-                lastSample = outsourcerSample[0]
-                if outsourcerSample[1] == verifierSample[1]:
-                    print(True, outsourcerSample[1])
-                else:
-                    print(False, outsourcerSample[1], verifierSample[1])  
+        sample_checked = False
+        if sampling_index in verifier_sample_dict and sampling_index in outsourcer_sample_dict:
+            if outsourcer_sample_dict[sampling_index][0] == verifier_sample_dict[sampling_index][0]:
+                sample_checked = True
+                # compare resp
+                if lastSample != outsourcer_sample_dict[sampling_index][0]:
+                    lastSample = outsourcer_sample_dict[sampling_index][0]
+                    if outsourcer_sample_dict[sampling_index][1] == verifier_sample_dict[sampling_index][1]:
+                        print(True, outsourcer_sample_dict[sampling_index][1])
+                        outsourcer_sample_dict.clear()
+                        verifier_sample_dict.clear()
+
+                    else:
+                        print(
+                            False, outsourcer_sample_dict[sampling_index][1], verifierSample[sampling_index][1])
 
         
+        if image_counter.getNumberofOutputsReceived() % sampling_interval == 0:  # pick new random sample
+            # only pick next sample if both parties have already processed last sample
+            if image_counter_verifier.getOutputCounter() >= sampling_index and image_counter.getOutputCounter() >= sampling_index:
+                # or max frame delay has to be added to target frame loss of sample
+                # random_number = random.randint(0,sampling_interval -1 - maxmium_number_of_frames_ahead)
+                random_number = random.randint(1, sampling_interval)
+                sampling_index = random_number + image_counter.getInputCounter()
 
+        
         verify_time = time.perf_counter()
         if(OutsourceContract.criteria == 'Atleast 2 objects detected'):
             for st in responses:
@@ -380,16 +415,13 @@ def main():
         moving_average_sign_time.add(sign_time)
         moving_average_send_time.add(send_time)
 
-        
-
         moving_average_verify_time.add(verify_time - receive_time)
         if(frames_behind != -1):
             moving_average_response_time.add(frames_behind)
 
-
-
-        moving_average_last_Sample.add(image_counter.getInputCounter() - lastSample)
-        
+        if sample_checked:
+            moving_average_last_Sample.add(
+                image_counter.getInputCounter() - lastSample)
 
         total_time = moving_average_camera_time.get_moving_average() \
             + moving_average_compress_time.get_moving_average() \
@@ -401,7 +433,7 @@ def main():
 
         # terminal prints
         if image_counter.getInputCounter() % 20 == 0:
-            print("total: %5.1fms (%5.1ffps) camera %4.1f (%4.1f%%) compressing %4.1f (%4.1f%%) signing %4.1f (%4.1f%%) sending %4.1f (%4.1f%%) frames ahead %4.1f last sample %4.1f verify time %4.1f (%4.1f%%) "
+            print("total: %5.1fms (%5.1ffps) camera %4.1f (%4.1f%%) compressing %4.1f (%4.1f%%) signing %4.1f (%4.1f%%) sending %4.1f (%4.1f%%) frames ahead %4.1f ahead of sample %4.1f verify time %4.1f (%4.1f%%) "
                   % (
 
 

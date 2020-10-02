@@ -60,7 +60,7 @@ class Parameters:
     minimum_response_rate = 0 #atleast x% of images have to get a response
     warm_up_time = 1500 #number of frames that vialtion of above QOE criteria are not leading to contract abortion (Can be used for handover)
 
-    sampling_interval = 10  #every x images of output an input gets sent to the verifier
+    sampling_interval = 100  #every x images of output an input gets sent to the verifier
     maxmium_number_of_frames_ahead_verifier = 200 #ifverifier does not respond with frame in time, contract gets aborted
 
     
