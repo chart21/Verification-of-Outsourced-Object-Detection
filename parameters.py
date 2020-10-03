@@ -11,7 +11,7 @@ class OutsourceContract:
     fine_contractor = 0
     model = 'yolov4' #model to use, possible choices are yolov4, yolov3
     tiny = True #whether to use tiny weigths for higher performance
-    merkle_tree_interval = 128 # 0: Do not use Merkle Tree but sing every output image, >0: Specifies the intervals at wich a Merkle Tree root is signed and sent
+    merkle_tree_interval = 0 # 0: Do not use Merkle Tree but sing every output image, >0: Specifies the intervals at wich a Merkle Tree root is signed and sent
     criteria = 'Atleast 2 objects detected'   #Specifies if all outputs should be sent back or only outputs that fulfill a certain criteria (e.g certain event happens), criterias should be combined with Merkle Trees to ensure overall consistency
     deposit_verfier = 10000000
     fine_verifier = 500000

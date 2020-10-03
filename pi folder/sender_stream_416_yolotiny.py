@@ -115,8 +115,15 @@ def main():
         mt = MerkleTools()
         interval_count = 0
         time_to_challenge = False
-        random_number = random.randint(0, merkle_tree_interval - 1)
+        next_merkle_chall = 0
+        curr_merkle_chall = 0
+        #random_number = random.randint(0, merkle_tree_interval - 1)
         current_root_hash = ''
+        next_merkle_response = ''
+        curr_merkle_response = ''
+        sample_received_in_interval = -2
+        abort_at_next_merkle_root = False
+
     else:
         random_number = random.randint(0, sampling_interval - 1)
 
@@ -159,24 +166,21 @@ def main():
         camera_time = time.perf_counter()
 
         # if index is at random sample, send random sample to verifier
-      
 
         if merkle_tree_interval == 0:
             compress_time, sign_time, send_time, = image_sender.send_image_compressed(
                 image_counter.getInputCounter(), image, contractHash, image_counter.getNumberofOutputsReceived())
         else:
-
+            
             compress_time, sign_time, send_time = image_sender.send_image_compressed_Merkle(
-                image_counter.getInputCounter(), image, contractHash, image_counter.getNumberofOutputsReceived(), random_number, interval_count, time_to_challenge)
+                image_counter.getInputCounter(), image, contractHash, image_counter.getNumberofOutputsReceived(), curr_merkle_chall, interval_count, time_to_challenge)
 
-        
         # reuse compressed image and just add signature
-          #if sampling_index == image_counter.getInputCounter() or sampling_index + sampling_interval < image_counter.getInputCounter(): # only for high frequency to reduce receive time
+          # if sampling_index == image_counter.getInputCounter() or sampling_index + sampling_interval < image_counter.getInputCounter(): # only for high frequency to reduce receive time
         if sampling_index == image_counter.getInputCounter():
             compress_time2, sign_time2, send_time2, = image_sender_verifier.send_image_compressed(
                 image_counter.getInputCounter(), image, verifier_contract_hash, image_counter_verifier.getNumberofOutputsReceived())
-        
-        
+
         # verifying
 
         receive_time = time.perf_counter()
@@ -220,7 +224,9 @@ def main():
                     if len(o.split(';--')) > 3:
                         challenge_response = []
                         try:
+                            
                             signature = o.split(';--')[1].encode('latin1')
+                            signatures_outsourcer.append(signature)
                             challenge_response = o.split(';--')[2:]
                             leaf_node = challenge_response[-2]
                             root_node = challenge_response[-1]
@@ -234,8 +240,18 @@ def main():
                             pass
                         if proof_received:  # if message contains a proof
                             # check if root node sent earlier matches current one
-                            if current_root_hash == root_node.encode('latin1'):
-                                mt = MerkleTools()
+                            mt = MerkleTools()
+                            
+                            if sample_received_in_interval == interval_count -1: #skip this part of the challenge if no sample was compared in last interval count
+                                mt.add_leaf(curr_merkle_response.decode('latin1'), True) #get last response into same format as leaf_node
+                                if leaf_node != mt.get_leaf(0):
+                                    print('Merkle tree leaf node does not match earlier sent response')
+                                else:
+                                    print('Success')
+                            
+                            
+                            if current_root_hash == root_node.encode('latin1'): #check if signed root hash received earlier equals sent root hash
+                                
 
                                 try:
                                     # print(str(challenge_response).encode('latin1') + bytes(interval_count-1) + contractHash)
@@ -264,7 +280,7 @@ def main():
 
                 # section to check for merkle roots
                 # if it's true then it's time to receive a new Merkle root
-                if image_counter.getNumberofOutputsReceived() > (merkle_tree_interval) * (interval_count+1):
+                if image_counter.getNumberofOutputsReceived() >= (merkle_tree_interval) * (interval_count+1):
 
                     if time_to_challenge == True:
                         sys.exit('Contract aborted: Merkle Tree proof of membership challenge response was not received in time. Possible Consquences for Contractor: Blacklist, Bad Review, Refuse of Payment for images from current interval')
@@ -278,7 +294,7 @@ def main():
                     except:
                         pass
 
-                    if root_hash_received == True:  # if root has received, verify signature
+                    if root_hash_received == True:  # if root hash received, verify signature
 
                         root_hash_received = False
                         time_to_challenge = True
@@ -289,14 +305,29 @@ def main():
                             match = vk.verify(
                                 root_hash + bytes(interval_count) + contractHash, sig)
                             interval_count += 1
+                            curr_merkle_chall = next_merkle_chall #to send last checked sample as challenge 
                             current_root_hash = root_hash
+                            curr_merkle_response = next_merkle_response  #to remmeber last check response
                             # print(interval_count, image_counter.getNumberofOutputsReceived())
                         except:
                             sys.exit(
                                 'Contract aborted: Contractor singature of root hash is ill formated. Possible Consquences for Contractor: Blacklist, Bad Review, Refuse of Payment for images from current interval')
 
+                    
+                        if abort_at_next_merkle_root:
+                            sys.exit(
+                                'Contract aborted: Merkle Tree is built on responses unequal to responses of the verifier. Possible Consquences for Contractor: Fine, Blacklist, Bad Review')
+
+                    
+                    
+                    
+                    
+                    
+                    signatures_outsourcer.append(sig)
                 responses.append(msg)
-                signatures_outsourcer.append(sig)
+                if len(signatures_outsourcer) == 0:
+                    signatures_outsourcer.append('Next merkle root serves as a proof')
+                
 
         responses_verifier = []
         signatures_verifier = []
@@ -321,23 +352,15 @@ def main():
 
         # make sure verifier has even computed a new output before assigning a new sample, otherwise it's possible to never compare samples
         if image_counter.getOutputCounter() == sampling_index and len(responses) > 0:
-            if lastSample != image_counter_verifier.getOutputCounter():
-                outsourcer_sample_dict[sampling_index] = (
-                    sampling_index, responses[-1], signatures_outsourcer[-1])
-            else:
-                # add to key value store
-                outsourcer_sample_dict[sampling_index] = (
-                    sampling_index, responses[-1], signatures_outsourcer[-1])
+            outsourcer_sample_dict[sampling_index] = (
+                sampling_index, responses[-1], signatures_outsourcer[-1])
+            #merkle_challenge_index = image_counter.getOutputCounter() % merkle_tree_interval
 
         if image_counter_verifier.getOutputCounter() == sampling_index and len(responses_verifier) > 0:
             # make sure outsourcer has even computed a new output beofre assigning a new sample, otherwise it's possible to never compare samples
-            if lastSample != image_counter.getOutputCounter():
-                verifier_sample_dict[sampling_index] = (
-                    sampling_index, responses_verifier[-1], signatures_verifier[-1])
-            else:
-                # add to key value store
-                verifier_sample_dict[sampling_index] = (
-                    sampling_index, responses[-1], signatures_verifier[-1])
+            verifier_sample_dict[sampling_index] = (
+                sampling_index, responses_verifier[-1], signatures_verifier[-1])
+            
 
         # sample_checked = False
         # if outsourcerSample[0] == verifierSample[0]:
@@ -354,19 +377,36 @@ def main():
         if sampling_index in verifier_sample_dict and sampling_index in outsourcer_sample_dict:
             if outsourcer_sample_dict[sampling_index][0] == verifier_sample_dict[sampling_index][0]:
                 sample_checked = True
+                
                 # compare resp
                 if lastSample != outsourcer_sample_dict[sampling_index][0]:
                     lastSample = outsourcer_sample_dict[sampling_index][0]
                     if outsourcer_sample_dict[sampling_index][1] == verifier_sample_dict[sampling_index][1]:
-                        print(True, outsourcer_sample_dict[sampling_index][1])
+                        #print(True, outsourcer_sample_dict[sampling_index][1])
+ 
+                        if merkle_tree_interval > 0:
+                            next_merkle_chall = outsourcer_sample_dict[sampling_index][0]
+                            next_merkle_response = outsourcer_sample_dict[sampling_index][1]
+                            
+                            sample_received_in_interval = interval_count  #used to check if a sample was received in current merkle interval
+                       
+                        
                         outsourcer_sample_dict.clear()
                         verifier_sample_dict.clear()
+                        #outsourcer_sample_dict = {} not needed since keys dont repeat
+                        #verifier_sample_dict = {}  
 
-                    else:
-                        print(
-                            False, outsourcer_sample_dict[sampling_index][1], verifierSample[sampling_index][1])
+                    else: #sample was found to be not equal
+                        
+                        if merkle_tree_interval == 0:
+                            sys.exit('Contract aborted. The following outputs are not equal: Outsourcer: ' +str(outsourcer_sample_dict[sampling_index][1]) +
+                            ' , Verifier: ' + str(verifierSample[sampling_index][1]) + '  Possible consequences for cheating party: Fine, Blacklist, Bad Review '
+                             )
+                        else:
+                            print(
+                            False, outsourcer_sample_dict[sampling_index][1], verifierSample[sampling_index][1]) #if no merkle tree -> exit, if merkle tree wait for next chall
+                            abort_at_next_merkle_root = True
 
-        
         if image_counter.getNumberofOutputsReceived() % sampling_interval == 0:  # pick new random sample
             # only pick next sample if both parties have already processed last sample
             if image_counter_verifier.getOutputCounter() >= sampling_index and image_counter.getOutputCounter() >= sampling_index:
@@ -375,7 +415,6 @@ def main():
                 random_number = random.randint(1, sampling_interval)
                 sampling_index = random_number + image_counter.getInputCounter()
 
-        
         verify_time = time.perf_counter()
         if(OutsourceContract.criteria == 'Atleast 2 objects detected'):
             for st in responses:

@@ -134,6 +134,8 @@ def main(_argv):
         mt = MerkleTools()
         mtOld = MerkleTools()
         interval_count = 0
+        mtOld_leaf_indices = {}
+        mt_leaf_indices = {}
         #rendundancy_counter = 0
         #rendundancy_counter2 = 0
         current_challenge = 1
@@ -332,11 +334,16 @@ def main(_argv):
 
         else:
             # print(image_count)
-            mt.add_leaf(boxtext, True)
+            mt.add_leaf(boxtext, True) #add leafs dynamiclly to merkle tree
+            mt_leaf_indices[outsourcer_image_count] = image_count % merkle_tree_interval #remember indices for challenge
+            #print(image_count % merkle_tree_interval)
+            
+            
             response = boxtext
 
             # time to send a new merkle root
-            if image_count > 1 and image_count % merkle_tree_interval == 0:
+            if image_count > 1 and (image_count+1) % merkle_tree_interval == 0: #e.g. if inervall = 128 then all respones from 0-127 are added to the merkle tree
+                #print(image_count)
                 a = time.perf_counter()
                 #rendundancy_counter = 2
                 mt.make_tree()
@@ -351,6 +358,12 @@ def main(_argv):
 
                 interval_count += 1
                 mtOld = mt  # save old merkle tree for challenge
+                #mtOld_leaf_indices.clear() # clear old indices
+                mtOld_leaf_indices.clear()
+                mtOld_leaf_indices = mt_leaf_indices.copy() #save old indices for challenge
+                #print(mtOld_leaf_indices)
+                mt_leaf_indices.clear() #clear for new indices
+                #mt_leaf_indices = {}
 
                 mt = MerkleTools()  # construct new merkle tree for next interval
                 te = time.perf_counter()-a
@@ -371,7 +384,22 @@ def main(_argv):
 
                     if outsourcer_time_to_challenge and image_count - last_challenge > 3: #in this case outsourcer has sent a challenge to meet with the old merkle tree, give outsourcer 3 frames time to confirm challenge received before sending again
                         last_challenge = image_count
-                        proofs = mtOld.get_proof(outsourcer_random_number)
+                        if outsourcer_random_number in mtOld_leaf_indices:
+                            outsourcer_random_number_index = mtOld_leaf_indices[outsourcer_random_number] #if challenge can be found, send proof back
+                        
+                        else:
+                            outsourcer_random_number_index = 0 #if challenge index cannot be found return leaf 0
+                            #print('proof index not found')
+
+
+                        
+
+
+
+                        
+
+                        proofs = mtOld.get_proof(outsourcer_random_number_index)
+                        
                         stringsend = ''
                         for proof in proofs:
                             stringsend += ';--'  # indicate start of proof
@@ -379,7 +407,7 @@ def main(_argv):
 
                         stringsend += ';--'
                         # send leaf
-                        stringsend += mtOld.get_leaf(outsourcer_random_number)
+                        stringsend += mtOld.get_leaf(outsourcer_random_number_index)
                         stringsend += ';--'
                         stringsend += mtOld.get_merkle_root()  # send root
 
