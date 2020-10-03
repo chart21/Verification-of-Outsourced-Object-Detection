@@ -70,6 +70,10 @@ def main():
     sampling_interval = Parameters.sampling_interval
     maxmium_number_of_frames_ahead_verifier = Parameters.maxmium_number_of_frames_ahead_verifier
 
+
+    maxmium_number_of_verifier_sample_missed_consecutively = Parameters.maxmium_number_of_verifier_sample_missed_consecutively
+    minimum_response_rate_verifier = Parameters.minimum_response_rate_verifier
+
     image_counter = ImageCounter(maxmium_number_of_frames_ahead)
     image_counter_verifier = ImageCounter(maxmium_number_of_frames_ahead)
 
@@ -111,6 +115,10 @@ def main():
 
     # interval_samples = sampling_interval * minimum_response_rate #interval to saves image samples
 
+    verifier_sample_processed = 0
+    verifier_sample_missed = 0 #how many samples were missed in total
+    verifier_sample_missed_consecutively = 0 #how many samples were missed conecutively
+    
     if merkle_tree_interval > 0:
         mt = MerkleTools()
         interval_count = 0
@@ -414,6 +422,20 @@ def main():
                 # random_number = random.randint(0,sampling_interval -1 - maxmium_number_of_frames_ahead)
                 random_number = random.randint(1, sampling_interval)
                 sampling_index = random_number + image_counter.getInputCounter()
+                verifier_sample_processed += 1 #save that verifier sucessfully processed sample
+                verifier_sample_missed_consecutively = 0 #reset
+            else:
+                if image_counter.getInputCounter() - sampling_index > maxmium_number_of_frames_ahead_verifier: #means that verifier has lost sample or is too slow
+                    random_number = random.randint(1, sampling_interval)
+                    sampling_index = random_number + image_counter.getInputCounter()
+                    verifier_sample_missed+=1 #save that verifier missed sample because of frame loss or being too slow
+                    verifier_sample_missed_consecutively+=1
+                    if image_counter.getInputCounter() > warm_up_time:
+                        if verifier_sample_missed_consecutively > maxmium_number_of_verifier_sample_missed_consecutively or verifier_sample_missed/verifier_sample_processed < minimum_response_rate_verifier :
+                            sys.exit(
+                    'Contract aborted: Verifier has failed to process enough samples in time. Possible Consquences for Verifier: Bad Review, Blacklist')
+
+                
 
         verify_time = time.perf_counter()
         if(OutsourceContract.criteria == 'Atleast 2 objects detected'):

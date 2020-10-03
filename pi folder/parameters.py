@@ -61,7 +61,11 @@ class Parameters:
     warm_up_time = 1500 #number of frames that vialtion of above QOE criteria are not leading to contract abortion (Can be used for handover)
 
     sampling_interval = 1  #every x images of output an input gets sent to the verifier
-    maxmium_number_of_frames_ahead_verifier = 200 #ifverifier does not respond with frame in time, contract gets aborted
+    maxmium_number_of_frames_ahead_verifier = 25 #if verifier does not respond with frame in time, sample is considered missed or lost and new one is generated
+    maxmium_number_of_verifier_sample_missed_consecutively = 5 #if too many samples are missed or lost after another, contract gets aborted
+    minimum_response_rate_verifier = 0.8 #if too many samples are missed or lost in total, contract gets aborted
+
+
 
     
    
