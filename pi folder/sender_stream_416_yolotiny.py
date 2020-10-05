@@ -74,6 +74,8 @@ def main():
     maxmium_number_of_verifier_sample_missed_consecutively = Parameters.maxmium_number_of_verifier_sample_missed_consecutively
     minimum_response_rate_verifier = Parameters.minimum_response_rate_verifier
 
+    framesync = Parameters.framesync
+
     image_counter = ImageCounter(maxmium_number_of_frames_ahead)
     image_counter_verifier = ImageCounter(maxmium_number_of_frames_ahead)
 
@@ -104,6 +106,9 @@ def main():
 
     outsourcer_sample_dict = {}
     verifier_sample_dict = {}
+
+    output_counter = 0
+    output_counter_verifier = 0
 
     lastSample = -1  # last sample index that was compared
     #lastVerifierSample = -1 #
@@ -173,6 +178,16 @@ def main():
 
         # capture image
         image = rpi_cam.get_image()
+
+        if framesync:
+            if image_counter.getInputCounter() > warm_up_time:
+                milisecs_outsourcer = moving_average_fps.get_moving_average()
+                frames_ahead_average = moving_average_response_time.get_moving_average()
+                adjusted_milisecs = (frames_ahead_average-1)* (1/milisecs_outsourcer) - 0.005 #add safety puffer
+                #adjusted_milisecs -= 0.01
+                if adjusted_milisecs > 0:
+                    time.sleep(adjusted_milisecs)
+
 
         camera_time = time.perf_counter()
 
@@ -412,16 +427,19 @@ def main():
             responses_verifier.append(msg)
             signatures_verifier.append(sig)
 
-        # make sure verifier has even computed a new output before assigning a new sample, otherwise it's possible to never compare samples
+        # make sure outspurcer has even computed a new output before assigning a new sample, otherwise it's possible to never compare samples
         if image_counter.getOutputCounter() == sampling_index and len(responses) > 0:
-            outsourcer_sample_dict[sampling_index] = (
-                sampling_index, responses[-1], signatures_outsourcer[-1])
-            #merkle_challenge_index = image_counter.getOutputCounter() % merkle_tree_interval
+
+            if int(responses[-1].decode('latin1')[5:].split(':', 1)[0]) == sampling_index: #in rare cases of threading timing output counter and responses can be desynced
+                outsourcer_sample_dict[sampling_index] = (
+                    sampling_index, responses[-1], signatures_outsourcer[-1])
+                #merkle_challenge_index = image_counter.getOutputCounter() % merkle_tree_interval
 
         if image_counter_verifier.getOutputCounter() == sampling_index and len(responses_verifier) > 0:
-            # make sure outsourcer has even computed a new output beofre assigning a new sample, otherwise it's possible to never compare samples
-            verifier_sample_dict[sampling_index] = (
-                sampling_index, responses_verifier[-1], signatures_verifier[-1])
+            # make sure verfier has even computed a new output beofre assigning a new sample, otherwise it's possible to never compare samples
+            if int(responses_verifier[-1].decode('latin1')[5:].split(':', 1)[0]) == sampling_index: #in rare cases of threading timing output counter and responses can be desynced
+                verifier_sample_dict[sampling_index] = (
+                    sampling_index, responses_verifier[-1], signatures_verifier[-1])
             
 
         # sample_checked = False
@@ -465,7 +483,7 @@ def main():
                             r_verifier.close()
                             time.sleep(1)
                             sys.exit('Contract aborted. The following outputs are not equal: Outsourcer: ' +str(outsourcer_sample_dict[sampling_index][1]) +
-                            ' , Verifier: ' + str(verifierSample[sampling_index][1]) + '  Possible consequences for cheating party: Fine, Blacklist, Bad Review '
+                            ' , Verifier: ' + str(verifier_sample_dict[sampling_index][1]) + '  Possible consequences for cheating party: Fine, Blacklist, Bad Review '
                              )
                         else:
                             print(

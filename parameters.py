@@ -45,10 +45,12 @@ class Parameters:
     info = True
     crop = False
 
+    
+
 class ParticipantData:
-    balance_outsourcer = 10000
-    balance_contractor = 10000
-    balance_verifier = 10000
+    balance_outsourcer = 10000000000000000000
+    balance_contractor = 10000000000000000000
+    balance_verifier = 100000000000000000000
 
 
 

@@ -48,6 +48,7 @@ class Receiver:
 
     def _run(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        
         # now our endpoint knows about the OTHER endpoint.
         self.s.bind((self._ip, self._port))
         self.s.listen(0)
