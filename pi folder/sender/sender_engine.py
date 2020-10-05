@@ -6,6 +6,8 @@ import imagezmq
 import hmac
 import hashlib
 
+#import sys
+
 #from ecdsa import SigningKey
 
 from nacl.signing import SigningKey
@@ -124,3 +126,14 @@ class Sender:
         send_time = time.perf_counter()
 
         return compress_finish_time - start_time, sign_image_time - compress_finish_time,  send_time - sign_image_time
+
+    def send_abort(self, image):
+        _, compressed_image = cv2.imencode(
+            ".jpg", image, [int(cv2.IMWRITE_JPEG_QUALITY), self.quality])        
+        self.sender.send_jpg('abort', image)
+
+    # def manualCancel(self):
+    #     if cv2.waitKey(1) == ord('q'):
+    #             #responder.respond('abort')                
+    #         sys.exit(
+    #             'Contract aborted: Outspurcer ended contract according to custom')

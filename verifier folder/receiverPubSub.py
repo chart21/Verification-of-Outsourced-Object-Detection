@@ -153,6 +153,10 @@ def main(_argv):
 
         # name[:-2] image signature, name
         name, compressed = receiver.receive()
+
+        if name == 'abort':
+            sys.exit('Contract aborted: Contract aborted by outsourcer according to custom')
+
         received_time = time.perf_counter()
 
         # decompress image
@@ -424,8 +428,9 @@ def main(_argv):
             cv2.imshow('raspberrypi', image)
 
             if cv2.waitKey(1) == ord('q'):
+                responder.respond('abort12345:6') #abort contract manually
                 sys.exit(
-                    'Contract aborted: Contractor ended contract according to custom')
+                    'Contract aborted: Verifier ended contract according to custom')
 
         image_showed_time = time.perf_counter()
 

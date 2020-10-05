@@ -86,6 +86,9 @@ def main():
     start_listening_time = time.perf_counter()
     while r.getConnectionEstablished() == False or r_verifier.getConnectionEstablished() == False:
         if time.perf_counter() - start_listening_time > 20:
+            r.close()
+            r_verifier.close()
+            time.sleep(1)
             sys.exit(
                 'Contract aborted: Contractor did not connect in time. Possible Consquences for Contractor: Blacklist, Bad Review')
         time.sleep(0.5)
@@ -201,17 +204,29 @@ def main():
         if merkle_tree_interval == 0:
 
             for o in output:
+                if o[:5] == 'abort':
+                    image_sender_verifier.send_abort(image)
+                    r.close()
+                    r_verifier.close()
+                    time.sleep(1)
+                    sys.exit('Contract aborted by contractor according to custom') 
 
                 try:
                     sig = o.split(';--')[1].encode('latin1')
                     msg = o.split(';--')[0].encode('latin1')
                 except:
+                    r.close()
+                    r_verifier.close()
+                    time.sleep(1)
                     sys.exit(
                         'Contract aborted: Contractor response is ill formated. Possible Consquences for Contractor: Blacklist, Bad Review')
 
                 try:
                     vk.verify(msg + contractHash, sig)
                 except:
+                    r.close()
+                    r_verifier.close()
+                    time.sleep(1)
                     sys.exit(
                         'Contract aborted: Contractor singature does not match response. Possible Consquences for Contractor: Blacklist, Bad Review')
                 responses.append(msg)
@@ -220,9 +235,19 @@ def main():
         else:  # Merkle tree verification is active
 
             if image_counter.getNumberofOutputsReceived() > (merkle_tree_interval) * (interval_count+2):
+                r.close()
+                r_verifier.close()
+                time.sleep(1)
                 sys.exit('Contract aborted: No root hash received for current interval in time. Possible Consquences for Contractor: Blacklist, Bad Review, Refuse of Payment for images from current interval')
 
             for o in output:
+                if o[:5] == 'abort':                
+                    image_sender_verifier.send_abort(image)
+                    r.close()
+                    r_verifier.close()
+                    time.sleep(1)
+                    sys.exit('Contract aborted by contractor according to custom') 
+
                 root_hash_received = False
                 msg = o.split(';--')[0].encode('latin1')  # get output
 
@@ -267,6 +292,9 @@ def main():
                                     vk.verify(str(challenge_response).encode(
                                         'latin1') + bytes(interval_count-1) + contractHash, signature)
                                 except:
+                                    r.close()
+                                    r_verifier.close()
+                                    time.sleep(1)
                                     sys.exit(
                                         'Contract aborted: Contractor singature of challenge response is incorrect. Possible Consquences for Contractor: Blacklist, Bad Review, Refuse of Payment for images from current interval')
 
@@ -280,10 +308,16 @@ def main():
                                 if merkle_proof_of_membership == True:
                                     time_to_challenge = False  # all challenges passed
                                 else:
+                                    r.close()
+                                    r_verifier.close()
+                                    time.sleep(1)
                                     sys.exit(
                                         'Contract aborted: Leaf is not contained in Merkle Tree. Possible Consquences for Contractor: Blacklist, Bad Review, Refuse of Payment for images from current interval, fine')
 
                             else:
+                                r.close()
+                                r_verifier.close()
+                                time.sleep(1)
                                 sys.exit('Contract aborted: Contractor signature of root hash received at challenge response does not match previous signed root hash . Possible Consquences for Contractor: Blacklist, Bad Review, Refuse of Payment for images from current interval, fine')
 
                 # section to check for merkle roots
@@ -291,6 +325,9 @@ def main():
                 if image_counter.getNumberofOutputsReceived() >= (merkle_tree_interval) * (interval_count+1):
 
                     if time_to_challenge == True:
+                        r.close()
+                        r_verifier.close()
+                        time.sleep(1)
                         sys.exit('Contract aborted: Merkle Tree proof of membership challenge response was not received in time. Possible Consquences for Contractor: Blacklist, Bad Review, Refuse of Payment for images from current interval')
 
                     try:  # check if merkle root received
@@ -318,11 +355,17 @@ def main():
                             curr_merkle_response = next_merkle_response  #to remmeber last check response
                             # print(interval_count, image_counter.getNumberofOutputsReceived())
                         except:
+                            r.close()
+                            r_verifier.close()
+                            time.sleep(1)
                             sys.exit(
                                 'Contract aborted: Contractor singature of root hash is ill formated. Possible Consquences for Contractor: Blacklist, Bad Review, Refuse of Payment for images from current interval')
 
                     
                         if abort_at_next_merkle_root:
+                            r.close()
+                            r_verifier.close()
+                            time.sleep(1)
                             sys.exit(
                                 'Contract aborted: Merkle Tree is built on responses unequal to responses of the verifier. Possible Consquences for Contractor: Fine, Blacklist, Bad Review')
 
@@ -342,18 +385,29 @@ def main():
         output_verifier = r_verifier.getAll()
 
         for o in output_verifier:
-
+            if o[:5] == 'abort':
+                image_sender.send_abort(image)
+                r.close()
+                r_verifier.close()
+                time.sleep(1)
+                sys.exit('Contract aborted by verfier according to custom') 
             try:
                 sig = o.split(';--')[1].encode('latin1')
                 msg = o.split(';--')[0].encode('latin1')
             except:
+                r.close()
+                r_verifier.close()
+                time.sleep(1)
                 sys.exit(
                     'Contract aborted: Contractor response is ill formated. Possible Consquences for Contractor: Blacklist, Bad Review')
 
             try:
                 vk.verify(msg + verifier_contract_hash, sig)
             except:
-                sys.exit(
+                r.close()
+                r_verifier.close()
+                time.sleep(1)
+                sys.exit(                    
                     'Contract aborted: Contractor singature does not match response. Possible Consquences for Contractor: Blacklist, Bad Review')
             responses_verifier.append(msg)
             signatures_verifier.append(sig)
@@ -407,6 +461,9 @@ def main():
                     else: #sample was found to be not equal
                         
                         if merkle_tree_interval == 0:
+                            r.close()
+                            r_verifier.close()
+                            time.sleep(1)
                             sys.exit('Contract aborted. The following outputs are not equal: Outsourcer: ' +str(outsourcer_sample_dict[sampling_index][1]) +
                             ' , Verifier: ' + str(verifierSample[sampling_index][1]) + '  Possible consequences for cheating party: Fine, Blacklist, Bad Review '
                              )
@@ -432,11 +489,19 @@ def main():
                     verifier_sample_missed_consecutively+=1
                     if image_counter.getInputCounter() > warm_up_time:
                         if verifier_sample_missed_consecutively > maxmium_number_of_verifier_sample_missed_consecutively or verifier_sample_missed/verifier_sample_processed < minimum_response_rate_verifier :
+                            r.close()
+                            r_verifier.close()
+                            time.sleep(1)
                             sys.exit(
                     'Contract aborted: Verifier has failed to process enough samples in time. Possible Consquences for Verifier: Bad Review, Blacklist')
 
                 
 
+        
+        
+        #image_sender.manualCancel()
+        
+        
         verify_time = time.perf_counter()
         if(OutsourceContract.criteria == 'Atleast 2 objects detected'):
             for st in responses:
@@ -448,12 +513,17 @@ def main():
         if frames_behind > maxmium_number_of_frames_ahead:
             if image_counter.getInputCounter() > warm_up_time:
                 # print(image_counter.getInputCounter(), image_counter.getFramesAhead())
-
+                r.close()
+                r_verifier.close()
+                time.sleep(1)
                 sys.exit(
                     'Contract aborted: Contractor response delay rate is too high. Possible Consquences for Contractor: Bad Review, Blacklist')
 
         if(image_counter.getNumberofOutputsReceived() < image_counter.getInputCounter() * minimum_response_rate):
             if image_counter.getInputCounter() > warm_up_time:
+                r.close()
+                r_verifier.close()
+                time.sleep(1)
                 sys.exit(
                     'Contract aborted: Contractor response rate is too low. Possible Consquences for Contractor: Bad Review, Blacklist')
 
