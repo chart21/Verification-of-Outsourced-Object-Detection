@@ -45,6 +45,7 @@ class VideoStreamSubscriber:
 
     def _run(self):
         receiver = imagezmq.ImageHub("tcp://{}:{}".format(self.hostname, self.port), REQ_REP=False)
+        print('here6')
         #countera = 0
         #counterb = 0
         while not self._stop:                      
