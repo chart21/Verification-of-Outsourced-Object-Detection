@@ -65,7 +65,7 @@ class Parameters:
     maxmium_number_of_verifier_sample_missed_consecutively = 5 #if too many samples are missed or lost after another, contract gets aborted
     minimum_response_rate_verifier = 0.01 #if too many samples are missed or lost in total, contract gets aborted
 
-    framesync = True #syncs framerate of outsourcer and contractor to save network bandwidth
+    framesync = False #syncs framerate of outsourcer and contractor to save network bandwidth
 
 
 

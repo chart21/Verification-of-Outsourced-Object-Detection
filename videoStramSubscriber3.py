@@ -63,6 +63,7 @@ class VideoStreamSubscriber:
             else:
                     self._stop = True
                     self._stop_message =  "Contract aborted in Thread2 waiting for new images: Outsourcer timed out. Possible Consquences for Outsourcer: Blacklist, Bad Review"
+                    print(self._stop_message)
                     raise TimeoutError(
                     "Contract aborted in Thread2 waiting for new images: Outsourcer timed out. Possible Consquences for Outsourcer: Blacklist, Bad Review")
 
@@ -105,8 +106,12 @@ class VideoStreamSubscriber:
         while not self._stop:
             name, compressed = self.receive()
 
+
+
             decompressedImage = cv2.imdecode(
                 np.frombuffer(compressed, dtype='uint8'), -1)
+
+
 
             # self._data2 = name, compressed, decompressed
 
@@ -116,6 +121,7 @@ class VideoStreamSubscriber:
                 else:
                     self._stop = True
                     self._stop_message = 'Contract aborted by outsourcer according to custom'
+                    print(self._stop_message)
                     sys.exit(self._stop_message)
 
             if merkle_tree_interval == 0:
@@ -128,6 +134,7 @@ class VideoStreamSubscriber:
                     else:
                         self._stop = True
                         self._stop_message = 'Contract aborted: Outsourcer signature does not match input. Possible Consquences for Outsourcer: Blacklist, Bad Review'
+                        print(self._stop_message)
                         sys.exit(self._stop_message)
                 # print(vrification_result)
 
@@ -146,6 +153,7 @@ class VideoStreamSubscriber:
                     else:
                         self._stop = True
                         self._stop_message =  'Contract aborted: Outsourcer signature does not match input. Possible Consquences for Outsourcer: Blacklist, Bad Review' 
+                        print(self._stop_message)
                         sys.exit(self._stop_message)
 
                # if name[-4] < (image_count-2)*minimum_receive_rate_from_contractor:
@@ -183,7 +191,8 @@ class VideoStreamSubscriber:
                     sys.exit(self._stop_message)
                 else:
                     self._stop = True
-                    self._stop_message = "Contract aborted in Thread3 receving from Thread2: Outsourcer timed out. Possible Consquences for Outsourcer: Blacklist, Bad Review"          
+                    self._stop_message = "Contract aborted in Thread3 receving from Thread2: Outsourcer timed out. Possible Consquences for Outsourcer: Blacklist, Bad Review"  
+                    print(self._stop_message)        
                     raise TimeoutError(
                         "Contract aborted in Thread3 receving from Thread2: Outsourcer timed out. Possible Consquences for Outsourcer: Blacklist, Bad Review")
 
@@ -203,6 +212,7 @@ class VideoStreamSubscriber:
             else:
                 self._stop = True
                 self._stop_message = "Contract aborted in Thread1 waiting for Thread4: Outsourcer probably timed out. Possible Consquences for Outsourcer: Blacklist, Bad Review"
+                print(self._stop_message)
                 raise TimeoutError(
                     "Contract aborted in Thread3 receving from Thread2: Outsourcer timed out. Possible Consquences for Outsourcer: Blacklist, Bad Review")
         self._readyToReceive.clear()
@@ -386,6 +396,7 @@ class VideoStreamSubscriber:
                     else:
                         self._stop = True
                         self._stop_message = 'Contract aborted: Contractor ended contract according to custom'
+                        print(self._stop_message)
                         sys.exit(self._stop_message)
 
             #image_showed_time = time.perf_counter()

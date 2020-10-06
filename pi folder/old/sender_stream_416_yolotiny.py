@@ -87,7 +87,7 @@ def main():
     print('Waiting for contractor and verifier to connect ...')
     start_listening_time = time.perf_counter()
     while r.getConnectionEstablished() == False or r_verifier.getConnectionEstablished() == False:
-        if time.perf_counter() - start_listening_time > 35:
+        if time.perf_counter() - start_listening_time > 20:
             r.close()
             r_verifier.close()
             time.sleep(1)
@@ -194,48 +194,18 @@ def main():
         # if index is at random sample, send random sample to verifier
 
         if merkle_tree_interval == 0:
-
-
-            if sampling_index == image_counter.getInputCounter(): #send image to both outsourcer and verifier
-                compress_time, sign_time, send_time, compressed = image_sender.send_image_compressed_with_return(
-                    image_counter.getInputCounter(), image, contractHash, image_counter.getNumberofOutputsReceived())  
-                
-                compress_time2, sign_time2, send_time2, = image_sender_verifier.send_image_compressed_with_input(
-                    image_counter.getInputCounter(), image, verifier_contract_hash, image_counter_verifier.getNumberofOutputsReceived(), compressed)
-                compress_time += compress_time2
-                sign_time += sign_time2
-                send_time +=send_time2
-
-            else:
-                compress_time, sign_time, send_time = image_sender.send_image_compressed(
-                    image_counter.getInputCounter(), image, contractHash, image_counter.getNumberofOutputsReceived())  
-
-
-        else:    
+            compress_time, sign_time, send_time, = image_sender.send_image_compressed(
+                image_counter.getInputCounter(), image, contractHash, image_counter.getNumberofOutputsReceived())
+        else:
             
-            
-            # reuse compressed image and just add signature
-            # if sampling_index == image_counter.getInputCounter() or sampling_index + sampling_interval < image_counter.getInputCounter(): # only for high frequency to reduce receive time
-            if sampling_index == image_counter.getInputCounter(): #send image to both outsourcer and verifier
-                
-                compress_time, sign_time, send_time, compressed = image_sender.send_image_compressed_Merkle_with_return(
-                    image_counter.getInputCounter(), image, contractHash, image_counter.getNumberofOutputsReceived(), curr_merkle_chall, interval_count, time_to_challenge)
+            compress_time, sign_time, send_time = image_sender.send_image_compressed_Merkle(
+                image_counter.getInputCounter(), image, contractHash, image_counter.getNumberofOutputsReceived(), curr_merkle_chall, interval_count, time_to_challenge)
 
-
-                
-                compress_time2, sign_time2, send_time2 = image_sender_verifier.send_image_compressed_with_input(
-                    image_counter.getInputCounter(), image, verifier_contract_hash, image_counter_verifier.getNumberofOutputsReceived(), compressed)
-
-
-                compress_time += compress_time2
-                sign_time += sign_time2
-                send_time += send_time2
-            else:
-
-                compress_time, sign_time, send_time = image_sender.send_image_compressed_Merkle(
-                    image_counter.getInputCounter(), image, contractHash, image_counter.getNumberofOutputsReceived(), curr_merkle_chall, interval_count, time_to_challenge)
-
-
+        # reuse compressed image and just add signature
+          # if sampling_index == image_counter.getInputCounter() or sampling_index + sampling_interval < image_counter.getInputCounter(): # only for high frequency to reduce receive time
+        if sampling_index == image_counter.getInputCounter():
+            compress_time2, sign_time2, send_time2, = image_sender_verifier.send_image_compressed(
+                image_counter.getInputCounter(), image, verifier_contract_hash, image_counter_verifier.getNumberofOutputsReceived())
 
         # verifying
 
@@ -324,8 +294,8 @@ def main():
                                 mt.add_leaf(curr_merkle_response.decode('latin1'), True) #get last response into same format as leaf_node
                                 if leaf_node != mt.get_leaf(0):
                                     print('Merkle tree leaf node does not match earlier sent response')
-                                #else:
-                                    #print('Success')
+                                else:
+                                    print('Success')
                             
                             
                             if current_root_hash == root_node.encode('latin1'): #check if signed root hash received earlier equals sent root hash
