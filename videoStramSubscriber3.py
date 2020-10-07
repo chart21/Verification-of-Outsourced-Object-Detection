@@ -138,9 +138,9 @@ class VideoStreamSubscriber:
                         sys.exit(self._stop_message)
                 # print(vrification_result)
 
-               # if name[-1] < (image_count-2)*minimum_receive_rate_from_contractor:
-               #     sys.exit(
-               #         'Contract aborted: Outsourcer did not acknowledge enough ouputs. Possible Consquences for Outsourcer: Blacklist, Bad Review')
+                if name[-1] < (self._image_count-2)*minimum_receive_rate_from_contractor:
+                    sys.exit(
+                        'Contract aborted: Outsourcer did not acknowledge enough ouputs. Possible Consquences for Outsourcer: Blacklist, Bad Review')
 
             else:
                 # verify if signature matches image, contract hash, and image count, and number of intervals, and random number
@@ -156,9 +156,9 @@ class VideoStreamSubscriber:
                         print(self._stop_message)
                         sys.exit(self._stop_message)
 
-               # if name[-4] < (image_count-2)*minimum_receive_rate_from_contractor:
-               #     sys.exit(
-               #         'Contract aborted: Outsourcer did not acknowledge enough ouputs. Possible Consquences for Outsourcer: Blacklist, Bad Review')
+                if name[-4] < (self._image_count-2)*minimum_receive_rate_from_contractor:
+                    sys.exit(
+                        'Contract aborted: Outsourcer did not acknowledge enough ouputs. Possible Consquences for Outsourcer: Blacklist, Bad Review')
 
             # image preprocessing
 
@@ -229,7 +229,7 @@ class VideoStreamSubscriber:
     def _run3(self, merkle_tree_interval, contractHash, hostname, sendingPort):
         self._readyToReceive.set()
         # print('ready1')
-        sk = SigningKey(Parameters.private_key_contractor)
+        sk = SigningKey(Parameters.private_key_self)
         dont_show = Parameters.dont_show
 
         responder = re.Responder(hostname, sendingPort)

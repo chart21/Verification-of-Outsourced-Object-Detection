@@ -4,6 +4,7 @@
 from parameters import ParticipantData
 from parameters import Parameters
 from parameters import OutsourceContract
+from parameters import VerifierContract
 from parameters import Helperfunctions
 import json
 from merkletools import MerkleTools
@@ -53,12 +54,26 @@ except:
 def main(_argv):
 
     # get paramters and contract details
-    vk = VerifyKey(OutsourceContract.public_key_outsourcer)
-    sk = SigningKey(Parameters.private_key_contractor)
 
-    model = OutsourceContract.model
+    if Parameters.is_contractor == True: #checks if this machine is outsourcer or verifier
+        vk = VerifyKey(OutsourceContract.public_key_outsourcer)
+        contractHash = Helperfunctions.hashContract().encode('latin1')
+        model_to_use = OutsourceContract.model
+        tiny = OutsourceContract.tiny
+        merkle_tree_interval = OutsourceContract.merkle_tree_interval
+    else:
+        vk = VerifyKey(VerifierContract.public_key_outsourcer)
+        contractHash = Helperfunctions.hashVerifierContract().encode('latin1')
+        model_to_use = VerifierContract.model
+        tiny = VerifierContract.tiny       
+        merkle_tree_interval = 0
+    
+    
+    sk = SigningKey(Parameters.private_key_self)
+
+    
     framework = Parameters.framework
-    tiny = OutsourceContract.tiny
+    
     weights = Parameters.weights
     count = Parameters.count
     dont_show = Parameters.dont_show
@@ -67,13 +82,13 @@ def main(_argv):
     input_size = Parameters.input_size
     iou = Parameters.iou
     score = Parameters.score
-    merkle_tree_interval = OutsourceContract.merkle_tree_interval
+    
     hostname = Parameters.ip_outsourcer  # Use to receive from other computer
     port = Parameters.port_outsourcer
     sendingPort = Parameters.sendingPort
     minimum_receive_rate_from_contractor = Parameters.minimum_receive_rate_from_contractor
 
-    contractHash = Helperfunctions.hashContract().encode('latin1')
+    
     # print(contractHash)
 
      # configure video stream receiver
@@ -240,7 +255,7 @@ def main(_argv):
             interpreter.invoke()
             pred = [interpreter.get_tensor(
                 output_details[i]['index']) for i in range(len(output_details))]
-            if model == 'yolov3' and tiny == True:
+            if model_to_use == 'yolov3' and tiny == True:
                 boxes, pred_conf = filter_boxes(
                     pred[1], pred[0], score_threshold=0.25, input_shape=tf.constant([input_size, input_size]))
             else:
@@ -457,7 +472,7 @@ def main(_argv):
             if cv2.waitKey(1) == ord('q'):
                 responder.respond('abort12345:6')                
                 sys.exit(
-                    'Contract aborted: Contractor ended contract according to custom')
+                    'Contract aborted: Ended contract according to custom')
 
         image_showed_time = time.perf_counter()
 

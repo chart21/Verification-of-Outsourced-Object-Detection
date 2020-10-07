@@ -4,6 +4,7 @@
 from parameters import ParticipantData
 from parameters import Parameters
 from parameters import OutsourceContract
+from parameters import VerifierContract
 from parameters import Helperfunctions
 import json
 from merkletools import MerkleTools
@@ -40,12 +41,21 @@ from utilities.render import Render
 def main(_argv):
 
     # get paramters and contract details
-    vk = VerifyKey(OutsourceContract.public_key_outsourcer)
-    sk = SigningKey(Parameters.private_key_contractor)
+    if Parameters.is_contractor == True: #checks if this machine is outsourcer or verifier
+        vk = VerifyKey(OutsourceContract.public_key_outsourcer)
+        contractHash = Helperfunctions.hashContract().encode('latin1')
+        model_to_use = OutsourceContract.model
+        tiny = OutsourceContract.tiny
+        merkle_tree_interval = OutsourceContract.merkle_tree_interval
+    else:
+        vk = VerifyKey(VerifierContract.public_key_outsourcer)
+        contractHash = Helperfunctions.hashVerifierContract().encode('latin1')
+        model_to_use = VerifierContract.model
+        tiny = VerifierContract.tiny       
+        merkle_tree_interval = 0
 
-    model_to_use = OutsourceContract.model
-    framework = Parameters.framework
-    tiny = OutsourceContract.tiny
+    sk = SigningKey(Parameters.private_key_self)    
+    framework = Parameters.framework    
     weights = Parameters.weights
     count = Parameters.count
     dont_show = Parameters.dont_show
@@ -54,13 +64,13 @@ def main(_argv):
     input_size = Parameters.input_size
     iou = Parameters.iou
     score = Parameters.score
-    merkle_tree_interval = OutsourceContract.merkle_tree_interval
+    
     hostname = Parameters.ip_outsourcer  # Use to receive from other computer
     port = Parameters.port_outsourcer
     sendingPort = Parameters.sendingPort
     minimum_receive_rate_from_contractor = Parameters.minimum_receive_rate_from_contractor
 
-    contractHash = Helperfunctions.hashContract().encode('latin1')
+    
     # print(contractHash)
 
      # configure video stream receiver

@@ -4,6 +4,7 @@
 from parameters import ParticipantData
 from parameters import Parameters
 from parameters import OutsourceContract
+from parameters import VerifierContract
 from parameters import Helperfunctions
 #import json
 #from merkletools import MerkleTools
@@ -52,8 +53,21 @@ from utilities.render import Render
 def main(_argv):
 
     # get paramters and contract details
-    vk_Bytes = OutsourceContract.public_key_outsourcer
-    merkle_tree_interval = OutsourceContract.merkle_tree_interval
+
+    if Parameters.is_contractor == True:
+        vk_Bytes = OutsourceContract.public_key_outsourcer
+        merkle_tree_interval = OutsourceContract.merkle_tree_interval
+        contractHash = Helperfunctions.hashContract().encode('latin1')
+        model_to_use = OutsourceContract.model
+        tiny = OutsourceContract.tiny
+    else:
+        vk_Bytes = VerifierContract.public_key_outsourcer
+        contractHash = Helperfunctions.hashVerifierContract().encode('latin1')
+        model_to_use = VerifierContract.model
+        tiny = VerifierContract.tiny       
+        merkle_tree_interval = 0
+
+
     port = Parameters.port_outsourcer
     sendingPort = Parameters.sendingPort
     hostname = Parameters.ip_outsourcer  # Use to receive from other computer
@@ -62,12 +76,12 @@ def main(_argv):
     dont_show = Parameters.dont_show
 
 
-    contractHash = Helperfunctions.hashContract().encode('latin1')
+
     #sk = SigningKey(Parameters.private_key_contractor)
 
-    model_to_use = OutsourceContract.model
+
     framework = Parameters.framework
-    tiny = OutsourceContract.tiny
+
     weights = Parameters.weights
     count = Parameters.count
     info = Parameters.info

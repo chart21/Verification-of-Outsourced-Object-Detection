@@ -219,7 +219,7 @@ class VideoStreamSubscriber:
     def _run3(self, merkle_tree_interval, contractHash, hostname, sendingPort):
         self._readyToReceive.set()
         # print('ready1')
-        sk = SigningKey(Parameters.private_key_contractor)
+        sk = SigningKey(Parameters.private_key_self)
         dont_show = Parameters.dont_show
 
         render = Render()

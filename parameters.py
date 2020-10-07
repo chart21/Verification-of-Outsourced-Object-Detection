@@ -19,19 +19,35 @@ class OutsourceContract:
 
 
 
+class VerifierContract:
+    contract_uid = 0 #contracts have to have a unique id to esnure that each contract hash is unique
+    public_key_outsourcer = b'e\x0fy\xfd\xe6\x16\x1f\xe0\x16B\xf2\xdb\x1d\x7f\xc9\xbcLCo\xa7\xa6c\x17\xbf\x8fo\xc8[\x07|bL'
+    public_key_verifier = b'\xe9\x919rce\xc9\x1a\xcfJ}\xa3\xee\x17q\x19\xbd\x0eu\xf4\xe0\xd5\x8a<\xc0\x81\x0c\xdbD\xf5;G'
 
+    deposit_verfier = 10000000
+    fine_verifier = 500000
+    reward_per_image_verifier = 1
+    
+    model = 'yolov4' #model to use, possible choices are yolov4, yolov3
+    tiny = True #whether to use tiny weigths for higher performance
+
+    deposit_verfier = 10000000
+    fine_verifier = 500000
+    reward_per_image_verifier = 1
 
 
 
 
 
 class Parameters:
-    ip_outsourcer = "192.168.178.34"
-    port_outsourcer = 5555
-    private_key_contractor = b'b\xc8\x8c\xa4\xd5\x82\x18cU\xfa\xdb\x0cg"\x06K\xa7\x01@\x9a\xf7\xa5Yn\x1b>|\x9a\xb6\x02\xaf&'
-    framework = '' #tflite, tfRT, tf
+    is_contractor = True #if this machine should act as a verifier or a contractor
+    private_key_self = b'b\xc8\x8c\xa4\xd5\x82\x18cU\xfa\xdb\x0cg"\x06K\xa7\x01@\x9a\xf7\xa5Yn\x1b>|\x9a\xb6\x02\xaf&'
     sendingPort = 1234
+    port_outsourcer = 5555
 
+
+    ip_outsourcer = "192.168.178.34"   
+    framework = '' #tflite, tfRT, tf
     minimum_receive_rate_from_contractor = 0.9 #contractor has to reecive and acknowledge atleast x% of resonses. Otherwise contract is aborted.
     
     framework = ''
@@ -41,7 +57,7 @@ class Parameters:
     score = 0.5
     weights = './checkpoints/yolov4-tiny-416'
     count = False
-    dont_show = False
+    dont_show = True
     info = True
     crop = False
 
@@ -60,4 +76,8 @@ class Helperfunctions:
         
        contractHash = hashlib.sha3_256(str(vars(OutsourceContract)).encode('latin1'))
        return contractHash.hexdigest()
+
+    def hashVerifierContract():
+       contractHash = hashlib.sha3_256(str(vars(VerifierContract)).encode('latin1'))
+       return contractHash.hexdigest()   
 

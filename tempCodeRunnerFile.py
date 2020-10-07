@@ -1,1 +1,1 @@
-model.load
+contractHash
