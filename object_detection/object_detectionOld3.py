@@ -130,8 +130,6 @@ class Model:
         self.image_scale = min(self.model_width / input_width, self.model_height / input_height)
         scaled_input_width = int(input_width * self.image_scale)
         scaled_input_height = int(input_height * self.image_scale)
-
-        #print(min(self.model_width / input_width, self.model_height / input_height), print(int(input_width * self.image_scale)))
         image = cv2_resize_image(image, (scaled_input_width, scaled_input_height))
 
         # update the self.update_tensor (numpy array)
@@ -157,7 +155,14 @@ class Model:
         boxes = self.model_interpreter.get_tensor(self.model_interpreter.get_output_details()[0]['index'])[0]
         class_ids = self.model_interpreter.get_tensor(self.model_interpreter.get_output_details()[1]['index'])[0]
         scores = self.model_interpreter.get_tensor(self.model_interpreter.get_output_details()[2]['index'])[0]
+        #scores = [0.06640625, 0.06640625, 0.046875,   0.046875,   0.046875,   0.046875, 0.046875,   0.046875,   0.046875,   0.046875,   0.046875,   0.046875,       0.046875,   0.046875,   0.046875,   0.046875,   0.046875,   0.046875,   0.046875, 0.046875 ]
+        
 
+        #class_ids = np.asarray([ 0,  0, 61,  0,  0,  0,  0,  0,  0, 61,  0, 61,  0, 61, 61,  0,  0,  0,  0,  0,])
+        #scores = np.asarray(scores)        
+        
+        #print(type(class_ids))
+        #print(class_ids)
         # only return the equal or above confidence_level results
         compare = scores >= self.confidence_level
         indexes = [i for i, val in enumerate(compare) if val]

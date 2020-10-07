@@ -61,14 +61,20 @@ class Render:
         """
         # translate the raw boxes into something actual image can handle
         boxes = scale_and_trim_boxes(boxes, image_width, image_height)
-
+        boxtext = ''
         for i in range(len(boxes)):
             class_id = class_ids[i]
             label = labels[class_id]
             box = boxes[i]
+
+            boxtext += str(label)
+            boxtext += str(box)
+            boxtext += ';'
 
             # render name of the object
             cv2.putText(self.image, label, (box[0] + 8, box[1] + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
             # render the frame around object
             cv2.rectangle(self.image, (box[0], box[1]), (box[2], box[3]), color, line_width)
+        
+        return boxtext

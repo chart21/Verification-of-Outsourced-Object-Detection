@@ -3,6 +3,7 @@ import platform
 import cv2
 import numpy as np
 import tflite_runtime.interpreter as tflite_interpreter
+#import tensorflow as tflite_interpreter
 from PIL import Image
 
 
@@ -50,10 +51,10 @@ class Model:
         self.model_channel = 0
         self.confidence_level = 0.8
         # Darwin means macOS...
-        self.edgetpu_lib = {'Linux': 'libedgetpu.so.1',
-                            'Darwin': 'libedgetpu.1.dylib',
-                            'Windows': 'edgetpu.dll'
-                            }[platform.system()]
+       # self.edgetpu_lib = {'Linux': 'libedgetpu.so.1',
+       #                     'Darwin': 'libedgetpu.1.dylib',
+       #                     'Windows': 'edgetpu.dll'
+       #                     }[platform.system()]
 
     def set_confidence_level(self, confidence_level):
         """
@@ -70,14 +71,30 @@ class Model:
         :param model_file_path: Path of the pre-trained model used.
         :return: nothing
         """
-
-        self.model_interpreter = tflite_interpreter.Interpreter(
-            model_path=model_file_path,
-            experimental_delegates=[tflite_interpreter.load_delegate(self.edgetpu_lib, {})])
+        
+       # self.model_interpreter = tflite_interpreter.Interpreter(
+       #     model_path=model_file_path,
+       #     experimental_delegates=[tflite_interpreter.load_delegate(self.edgetpu_lib, {})])
+        model_file_path = 'C:/Users/Kitzbi/Downloads/RPi-Stream-master/RPi-Stream-master/object_detection/ssd_mobilenet_v2_coco_quant_postprocess.tflite'
+        #self.model_interpreter = tflite_interpreter.Interpreter(model_file_path)
+        #self.model.interpreter.allocate_tensors()
+        self.model_interpreter = tflite_interpreter.Interpreter(model_file_path)
         self.model_interpreter.allocate_tensors()
+         
+        #self.model_interpreter = tflite_interpreter.Interpreter(
+        #self.model_interpreter.allocate_tensors(model_path=model_file_path))
+        
+       # interpreter = tflite_interpreter.Interpreter(interpreter.allocate_tensors(model_path=model_file_path))
+
+        #_, self.model_height, self.model_width, _ = self.model_interpreter.get_input_details()[0]['shape']
+        #self.update_tensor = self.model_interpreter.get_tensor(self.model_interpreter.get_input_details()[0]['index'])
+        #_, _, _, self.model_channel = self.update_tensor.shape
+
         _, self.model_height, self.model_width, _ = self.model_interpreter.get_input_details()[0]['shape']
         self.update_tensor = self.model_interpreter.get_tensor(self.model_interpreter.get_input_details()[0]['index'])
         _, _, _, self.model_channel = self.update_tensor.shape
+
+        
         print('RPi Stream -> Coral TPU Model Loaded: ' + model_file_path)
 
     def load_labels(self, label_file_path):
@@ -130,8 +147,6 @@ class Model:
         self.image_scale = min(self.model_width / input_width, self.model_height / input_height)
         scaled_input_width = int(input_width * self.image_scale)
         scaled_input_height = int(input_height * self.image_scale)
-
-        #print(min(self.model_width / input_width, self.model_height / input_height), print(int(input_width * self.image_scale)))
         image = cv2_resize_image(image, (scaled_input_width, scaled_input_height))
 
         # update the self.update_tensor (numpy array)
