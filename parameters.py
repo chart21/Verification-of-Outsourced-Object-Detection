@@ -41,6 +41,7 @@ class VerifierContract:
 
 class Parameters:
     is_contractor = True #if this machine should act as a verifier or a contractor
+    
     private_key_self = b'b\xc8\x8c\xa4\xd5\x82\x18cU\xfa\xdb\x0cg"\x06K\xa7\x01@\x9a\xf7\xa5Yn\x1b>|\x9a\xb6\x02\xaf&'
     sendingPort = 1234
     port_outsourcer = 5555

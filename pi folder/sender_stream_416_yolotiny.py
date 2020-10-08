@@ -113,6 +113,7 @@ def main():
     lastSample = -1  # last sample index that was compared
     #lastVerifierSample = -1 #
     #lastOutsourcerSample = -1
+    saved_compressed_sample_image = b'' #stores the compressed last sample image. If signed, unmatching responses are received any third party can verify with this saved image which response is not ocrrect
 
     contractHash = Helperfunctions.hashContract().encode('latin1')
 
@@ -202,6 +203,9 @@ def main():
                 
                 compress_time2, sign_time2, send_time2, = image_sender_verifier.send_image_compressed_with_input(
                     image_counter.getInputCounter(), image, verifier_contract_hash, image_counter_verifier.getNumberofOutputsReceived(), compressed)
+                
+                saved_compressed_sample_image = compressed
+                
                 compress_time += compress_time2
                 sign_time += sign_time2
                 send_time +=send_time2
@@ -226,6 +230,7 @@ def main():
                 compress_time2, sign_time2, send_time2 = image_sender_verifier.send_image_compressed_with_input(
                     image_counter.getInputCounter(), image, verifier_contract_hash, image_counter_verifier.getNumberofOutputsReceived(), compressed)
 
+                saved_compressed_sample_image = compressed
 
                 compress_time += compress_time2
                 sign_time += sign_time2
@@ -517,13 +522,13 @@ def main():
                              )
                         else:
                             print(
-                            False, outsourcer_sample_dict[sampling_index][1], verifierSample[sampling_index][1]) #if no merkle tree -> exit, if merkle tree wait for next chall
+                            "The following outputs are not equal:", outsourcer_sample_dict[sampling_index][1], verifier_sample_dict[sampling_index][1]) #if no merkle tree -> exit, if merkle tree wait for next chall
                             abort_at_next_merkle_root = True
 
         if image_counter.getNumberofOutputsReceived() % sampling_interval == 0:  # pick new random sample
             # only pick next sample if both parties have already processed last sample
             if image_counter_verifier.getOutputCounter() >= sampling_index and image_counter.getOutputCounter() >= sampling_index:
-                # or max frame delay has to be added to target frame loss of sample
+                
                 # random_number = random.randint(0,sampling_interval -1 - maxmium_number_of_frames_ahead)
                 random_number = random.randint(1, sampling_interval)
                 sampling_index = random_number + image_counter.getInputCounter()
@@ -586,7 +591,13 @@ def main():
             a = time.perf_counter()
         if(image_counter.getNumberofOutputsReceived() == 1200):
             a = time.perf_counter() - a
-            print(a)
+            print('contractor', a)
+
+        if(image_counter_verifier.getNumberofOutputsReceived() == 300):
+            b = time.perf_counter()
+        if(image_counter_verifier.getNumberofOutputsReceived() == 700):
+            b = time.perf_counter() - b
+            print('verifier', b)
 
         # statistics
         moving_average_camera_time.add(camera_time - start_time)

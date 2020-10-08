@@ -60,9 +60,9 @@ class Parameters:
     minimum_response_rate = 0 #atleast x% of images have to get a response
     warm_up_time = 1500 #number of frames that vialtion of above QOE criteria are not leading to contract abortion (Can be used for handover)
 
-    sampling_interval = 4000  #every x images of output an input gets sent to the verifier
-    maxmium_number_of_frames_ahead_verifier = 25 #if verifier does not respond with frame in time, sample is considered missed or lost and new one is generated
-    maxmium_number_of_verifier_sample_missed_consecutively = 5 #if too many samples are missed or lost after another, contract gets aborted
+    sampling_interval = 1  #every x images of output an input gets sent to the verifier
+    maxmium_number_of_frames_ahead_verifier = 40 #if verifier does not respond with frame in time, sample is considered missed or lost and new one is generated
+    maxmium_number_of_verifier_sample_missed_consecutively = 20 #if too many samples are missed or lost after another, contract gets aborted
     minimum_response_rate_verifier = 0.01 #if too many samples are missed or lost in total, contract gets aborted
 
     framesync = False #syncs framerate of outsourcer and contractor to save network bandwidth
