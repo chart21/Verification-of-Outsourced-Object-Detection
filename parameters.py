@@ -58,7 +58,7 @@ class Parameters:
     score = 0.5
     weights = './checkpoints/yolov4-tiny-416'
     count = False
-    dont_show = True
+    dont_show = False
     info = True
     crop = False
 

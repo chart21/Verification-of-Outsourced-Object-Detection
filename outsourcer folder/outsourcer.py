@@ -41,6 +41,7 @@ def main():
     # print(pk.verify_key)
 
     vk = VerifyKey(OutsourceContract.public_key_contractor)
+    vk_verifier = VerifyKey(VerifierContract.public_key_verifier)
 
     # video info
     width = Parameters.input_size
@@ -147,16 +148,16 @@ def main():
     # initialize sender
     image_sender = Sender(sending_port, pk, quality)
     image_sender.set_quality(quality)
-    print('RPi Stream -> Sender Initialized')
+    print('Sender Initialized')
 
     image_sender_verifier = Sender(sending_port_verifier, pk, quality)
     image_sender.set_quality(quality)
-    print('RPi Stream -> Verifier Sender Initialized')
+    print('Verifier Sender Initialized')
 
     # initialize RPi camera
     rpi_cam = RPiCamera(width, height)
     rpi_cam.start()
-    print('RPi Stream -> Camera Started')
+    print('Camera Started')
     time.sleep(1.0)
 
     # statistics
@@ -172,7 +173,7 @@ def main():
     moving_average_last_Sample = MovingAverage(moving_average_points)
 
     # streaming
-    print('RPi Stream -> Start Streaming')
+    print('Start Streaming')
     while True:
 
         start_time = time.perf_counter()
@@ -452,7 +453,7 @@ def main():
                     'Contract aborted: Contractor response is ill formated. Possible Consquences for Contractor: Blacklist, Bad Review')
 
             try:
-                vk.verify(msg + verifier_contract_hash, sig)
+                vk_verifier.verify(msg + verifier_contract_hash, sig)
             except:
                 r.close()
                 r_verifier.close()

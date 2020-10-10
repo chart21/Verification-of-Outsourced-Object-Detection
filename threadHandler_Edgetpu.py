@@ -19,8 +19,10 @@ from merkletools import MerkleTools
 
 import json
 
+from utilities.render import Render
 
-class VideoStreamSubscriber:
+
+class ThreadHandler:
 
     def __init__(self, hostname, port, merkle_tree_interval, contractHash, minimum_receive_rate_from_contractor, vk_Bytes, input_size, sendingPort):
         self.hostname = hostname
@@ -138,9 +140,9 @@ class VideoStreamSubscriber:
                         sys.exit(self._stop_message)
                 # print(vrification_result)
 
-                if name[-1] < (self._image_count-2)*minimum_receive_rate_from_contractor:
-                    sys.exit(
-                        'Contract aborted: Outsourcer did not acknowledge enough ouputs. Possible Consquences for Outsourcer: Blacklist, Bad Review')
+               # if name[-1] < (image_count-2)*minimum_receive_rate_from_contractor:
+               #     sys.exit(
+               #         'Contract aborted: Outsourcer did not acknowledge enough ouputs. Possible Consquences for Outsourcer: Blacklist, Bad Review')
 
             else:
                 # verify if signature matches image, contract hash, and image count, and number of intervals, and random number
@@ -156,28 +158,16 @@ class VideoStreamSubscriber:
                         print(self._stop_message)
                         sys.exit(self._stop_message)
 
-                if name[-4] < (self._image_count-2)*minimum_receive_rate_from_contractor:
-                    sys.exit(
-                        'Contract aborted: Outsourcer did not acknowledge enough ouputs. Possible Consquences for Outsourcer: Blacklist, Bad Review')
+               # if name[-4] < (image_count-2)*minimum_receive_rate_from_contractor:
+               #     sys.exit(
+               #         'Contract aborted: Outsourcer did not acknowledge enough ouputs. Possible Consquences for Outsourcer: Blacklist, Bad Review')
 
             # image preprocessing
 
         # region
-            original_image = cv2.cvtColor(decompressedImage, cv2.COLOR_BGR2RGB)
+           
 
-            image_data = cv2.resize(
-                original_image, (input_size, input_size))  # 0.4ms
-
-            image_data = image_data / 255.  # 2.53ms
-
-            images_data = []
-
-            for i in range(1):
-                images_data.append(image_data)
-
-            images_data = np.asarray(images_data).astype(np.float32)  # 3.15ms
-
-            self._data2 = (images_data, name, original_image)
+            self._data2 = (decompressedImage, name)
 
             self._data2_ready.set()
 
@@ -232,7 +222,11 @@ class VideoStreamSubscriber:
         sk = SigningKey(Parameters.private_key_self)
         dont_show = Parameters.dont_show
 
+        render = Render()
+        
         responder = re.Responder(hostname, sendingPort)
+
+
 
         if merkle_tree_interval > 0:
             mt = MerkleTools()
@@ -252,11 +246,21 @@ class VideoStreamSubscriber:
             self._received.wait()
             self._received.clear()
 
-            boxtext = self._data3[0]
-            image = self._data3[1]
-            name = self._data3[2]
-            self._image_count = self._data3[3]
+            #boxtext = self._data3[0]
+            decompressedImage = self._data3[0]
+            name = self._data3[1]
+            self._image_count = self._data3[2]
+            labels = self._data3[3]
+            class_ids = self._data3[4]
+            boxes = self._data3[5]
+            render.set_image(decompressedImage)
+            boxtext = render.render_detection(labels, class_ids, boxes, decompressedImage.shape[1], decompressedImage.shape[0], (45, 227, 227), 3)
             
+            if merkle_tree_interval == 0:
+                boxtext = 'Image' + str(name[-2]) + ':;' + boxtext
+            else:
+                boxtext = 'Image' + str(name[-5]) + ':;' + boxtext      
+
             if merkle_tree_interval == 0:
                     # sig = sk.sign_deterministic(boxtext.encode('latin1'))
                     sig = sk.sign(boxtext.encode('latin1') +
@@ -386,8 +390,8 @@ class VideoStreamSubscriber:
             if not dont_show:
                     # image.show()
 
-                image = cv2.cvtColor(np.array(image), cv2.COLOR_BGR2RGB)
-                cv2.imshow('raspberrypi', image)
+                #image = cv2.cvtColor(np.array(image), cv2.COLOR_BGR2RGB)
+                cv2.imshow('raspberrypi', decompressedImage)
 
                 if cv2.waitKey(1) == ord('q'):
                     responder.respond('abort12345:6')                    

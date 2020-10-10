@@ -6,32 +6,24 @@ from parameters import Parameters
 from parameters import OutsourceContract
 from parameters import VerifierContract
 from parameters import Helperfunctions
-#import json
-#from merkletools import MerkleTools
+
 import sys
-import videoStramSubscriber3EdgeTpu as vss3
-#from nacl.signing import SigningKey
-#from nacl.signing import VerifyKey
+import threadHandler_Edgetpu as vss3
+
 import time
 import imagezmq
-#import Responder as re
+
 from utilities.stats import MovingAverage
-#from tensorflow.compat.v1 import InteractiveSession
-#from tensorflow.compat.v1 import ConfigProto
+
 import numpy as np
 import cv2
 from PIL import Image
-#from tensorflow.python.saved_model import tag_constants
-#from core.functions import *
-#from core.yolov4 import filter_boxes
-#import core.utils as utils
-#from absl.flags import FLAGS
+
 from absl import app, flags, logging
-#import tensorflow as tf
+
 import os
-#from Framsender import FrameSender
-# comment out below line to enable tensorflow outputs
-#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+
 from object_detection.object_detection import Model
 from utilities.render import Render
 
@@ -39,15 +31,9 @@ from utilities.render import Render
 
 
 
-#from object_detection.object_detection import Model
-#from utilities.render import Render
 
 
-#from ecdsa import VerifyingKey
-#from ecdsa import SigningKey
 
-
-# Helper class implementing an IO deamon thread
 
 
 def main(_argv):
@@ -103,7 +89,7 @@ def main(_argv):
     # print(contractHash)
 
      # configure video stream receiver
-    receiver = vss3.VideoStreamSubscriber(hostname, port, merkle_tree_interval, contractHash, minimum_receive_rate_from_contractor, vk_Bytes, input_size, sendingPort)
+    receiver = vss3.ThreadHandler(hostname, port, merkle_tree_interval, contractHash, minimum_receive_rate_from_contractor, vk_Bytes, input_size, sendingPort)
     
     model = Model()
     model.load_model('models_edgetpu/ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite')
@@ -111,7 +97,7 @@ def main(_argv):
     model.set_confidence_level(0.3)
     
     
-    print('RPi Stream -> Receiver Initialized')
+    print('Receiver Initialized')
     #time.sleep(4.0)
     
     #frameSender = FrameSender(hostname, sendingPort, merkle_tree_interval, contractHash)

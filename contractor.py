@@ -3,7 +3,7 @@
 
 from parameters import ParticipantData
 from parameters import Parameters
-#from parameters import OutsourceContract
+from parameters import OutsourceContract
 from parameters import VerifierContract
 from parameters import Helperfunctions
 import json
@@ -54,12 +54,26 @@ except:
 def main(_argv):
 
     # get paramters and contract details
-    vk = VerifyKey(VerifierContract.public_key_outsourcer)
-    sk = SigningKey(Parameters.private_key_verifier)
 
-    model = VerifierContract.model
+    if Parameters.is_contractor == True: #checks if this machine is outsourcer or verifier
+        vk = VerifyKey(OutsourceContract.public_key_outsourcer)
+        contractHash = Helperfunctions.hashContract().encode('latin1')
+        model_to_use = OutsourceContract.model
+        tiny = OutsourceContract.tiny
+        merkle_tree_interval = OutsourceContract.merkle_tree_interval
+    else:
+        vk = VerifyKey(VerifierContract.public_key_outsourcer)
+        contractHash = Helperfunctions.hashVerifierContract().encode('latin1')
+        model_to_use = VerifierContract.model
+        tiny = VerifierContract.tiny       
+        merkle_tree_interval = 0
+    
+    
+    sk = SigningKey(Parameters.private_key_self)
+
+    
     framework = Parameters.framework
-    tiny = VerifierContract.tiny
+    
     weights = Parameters.weights
     count = Parameters.count
     dont_show = Parameters.dont_show
@@ -68,19 +82,18 @@ def main(_argv):
     input_size = Parameters.input_size
     iou = Parameters.iou
     score = Parameters.score
-    #merkle_tree_interval = OutsourceContract.merkle_tree_interval
-    merkle_tree_interval = 0
+    
     hostname = Parameters.ip_outsourcer  # Use to receive from other computer
     port = Parameters.port_outsourcer
     sendingPort = Parameters.sendingPort
     minimum_receive_rate_from_contractor = Parameters.minimum_receive_rate_from_contractor
 
-    contractHash = Helperfunctions.hashVerifierContract().encode('latin1')
+    
     # print(contractHash)
 
      # configure video stream receiver
     receiver = vss.VideoStreamSubscriber(hostname, port)
-    print('RPi Stream -> Receiver Initialized')
+    print('Receiver Initialized')
     # time.sleep(1.0)
    
    
@@ -136,6 +149,8 @@ def main(_argv):
         mt = MerkleTools()
         mtOld = MerkleTools()
         interval_count = 0
+        mtOld_leaf_indices = {}
+        mt_leaf_indices = {}
         #rendundancy_counter = 0
         #rendundancy_counter2 = 0
         current_challenge = 1
@@ -155,7 +170,8 @@ def main(_argv):
         name, compressed = receiver.receive()
 
         if name == 'abort':
-            sys.exit('Contract aborted: Contract aborted by outsourcer according to custom')
+            sys.exit('Contract aborted by outsourcer according to custom')
+
 
         received_time = time.perf_counter()
 
@@ -239,7 +255,7 @@ def main(_argv):
             interpreter.invoke()
             pred = [interpreter.get_tensor(
                 output_details[i]['index']) for i in range(len(output_details))]
-            if model == 'yolov3' and tiny == True:
+            if model_to_use == 'yolov3' and tiny == True:
                 boxes, pred_conf = filter_boxes(
                     pred[1], pred[0], score_threshold=0.25, input_shape=tf.constant([input_size, input_size]))
             else:
@@ -338,11 +354,16 @@ def main(_argv):
 
         else:
             # print(image_count)
-            mt.add_leaf(boxtext, True)
+            mt.add_leaf(boxtext, True) #add leafs dynamiclly to merkle tree
+            mt_leaf_indices[outsourcer_image_count] = image_count % merkle_tree_interval #remember indices for challenge
+            #print(image_count % merkle_tree_interval)
+            
+            
             response = boxtext
 
             # time to send a new merkle root
-            if image_count > 1 and image_count % merkle_tree_interval == 0:
+            if image_count > 1 and (image_count+1) % merkle_tree_interval == 0: #e.g. if inervall = 128 then all respones from 0-127 are added to the merkle tree
+                #print(image_count)
                 a = time.perf_counter()
                 #rendundancy_counter = 2
                 mt.make_tree()
@@ -357,6 +378,12 @@ def main(_argv):
 
                 interval_count += 1
                 mtOld = mt  # save old merkle tree for challenge
+                #mtOld_leaf_indices.clear() # clear old indices
+                mtOld_leaf_indices.clear()
+                mtOld_leaf_indices = mt_leaf_indices.copy() #save old indices for challenge
+                #print(mtOld_leaf_indices)
+                mt_leaf_indices.clear() #clear for new indices
+                #mt_leaf_indices = {}
 
                 mt = MerkleTools()  # construct new merkle tree for next interval
                 te = time.perf_counter()-a
@@ -377,7 +404,22 @@ def main(_argv):
 
                     if outsourcer_time_to_challenge and image_count - last_challenge > 3: #in this case outsourcer has sent a challenge to meet with the old merkle tree, give outsourcer 3 frames time to confirm challenge received before sending again
                         last_challenge = image_count
-                        proofs = mtOld.get_proof(outsourcer_random_number)
+                        if outsourcer_random_number in mtOld_leaf_indices:
+                            outsourcer_random_number_index = mtOld_leaf_indices[outsourcer_random_number] #if challenge can be found, send proof back
+                        
+                        else:
+                            outsourcer_random_number_index = 0 #if challenge index cannot be found return leaf 0
+                            #print('proof index not found')
+
+
+                        
+
+
+
+                        
+
+                        proofs = mtOld.get_proof(outsourcer_random_number_index)
+                        
                         stringsend = ''
                         for proof in proofs:
                             stringsend += ';--'  # indicate start of proof
@@ -385,7 +427,7 @@ def main(_argv):
 
                         stringsend += ';--'
                         # send leaf
-                        stringsend += mtOld.get_leaf(outsourcer_random_number)
+                        stringsend += mtOld.get_leaf(outsourcer_random_number_index)
                         stringsend += ';--'
                         stringsend += mtOld.get_merkle_root()  # send root
 
@@ -428,9 +470,9 @@ def main(_argv):
             cv2.imshow('raspberrypi', image)
 
             if cv2.waitKey(1) == ord('q'):
-                responder.respond('abort12345:6') #abort contract manually
+                responder.respond('abort12345:6')                
                 sys.exit(
-                    'Contract aborted: Verifier ended contract according to custom')
+                    'Contract aborted: Ended contract according to custom')
 
         image_showed_time = time.perf_counter()
 

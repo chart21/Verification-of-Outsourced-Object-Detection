@@ -9,7 +9,7 @@ from parameters import Helperfunctions
 #import json
 #from merkletools import MerkleTools
 import sys
-import videoStramSubscriber3 as vss3
+import threadHandler as vss3
 #from nacl.signing import SigningKey
 #from nacl.signing import VerifyKey
 import time
@@ -103,11 +103,11 @@ def main(_argv):
     # print(contractHash)
 
      # configure video stream receiver
-    receiver = vss3.VideoStreamSubscriber(hostname, port, merkle_tree_interval, contractHash, minimum_receive_rate_from_contractor, vk_Bytes, input_size, sendingPort)
+    receiver = vss3.ThreadHandler(hostname, port, merkle_tree_interval, contractHash, minimum_receive_rate_from_contractor, vk_Bytes, input_size, sendingPort)
 
     
     
-    print('RPi Stream -> Receiver Initialized')
+    print('Receiver Initialized')
     #time.sleep(4.0)
     
     #frameSender = FrameSender(hostname, sendingPort, merkle_tree_interval, contractHash)

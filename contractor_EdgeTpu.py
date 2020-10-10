@@ -15,46 +15,32 @@ from nacl.signing import VerifyKey
 import time
 import imagezmq
 import Responder as re
-from utilities.stats import MovingAverage
-from tensorflow.compat.v1 import InteractiveSession
-from tensorflow.compat.v1 import ConfigProto
+
+#from tensorflow.compat.v1 import InteractiveSession
+#from tensorflow.compat.v1 import ConfigProto
 import numpy as np
 import cv2
 from PIL import Image
-from tensorflow.python.saved_model import tag_constants
-from core.functions import *
-from core.yolov4 import filter_boxes
-import core.utils as utils
-from absl.flags import FLAGS
+#from tensorflow.python.saved_model import tag_constants
+#from core.functions import *
+#from core.yolov4 import filter_boxes
+#import core.utils as utils
+#from absl.flags import FLAGS
 from absl import app, flags, logging
-import tensorflow as tf
+#import tensorflow as tf
 import os
 # comment out below line to enable tensorflow outputs
 #os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-physical_devices = tf.config.experimental.list_physical_devices('GPU')
-
-try:
-    if len(physical_devices) > 0:
-        tf.config.experimental.set_memory_growth(physical_devices[0], True)
-except:
-    pass
+from utilities.stats import MovingAverage
+from object_detection.object_detection import Model
+from utilities.render import Render
 
 
-#from object_detection.object_detection import Model
-#from utilities.render import Render
-
-
-#from ecdsa import VerifyingKey
-#from ecdsa import SigningKey
-
-
-# Helper class implementing an IO deamon thread
 
 
 def main(_argv):
 
     # get paramters and contract details
-
     if Parameters.is_contractor == True: #checks if this machine is outsourcer or verifier
         vk = VerifyKey(OutsourceContract.public_key_outsourcer)
         contractHash = Helperfunctions.hashContract().encode('latin1')
@@ -67,13 +53,9 @@ def main(_argv):
         model_to_use = VerifierContract.model
         tiny = VerifierContract.tiny       
         merkle_tree_interval = 0
-    
-    
-    sk = SigningKey(Parameters.private_key_self)
 
-    
-    framework = Parameters.framework
-    
+    sk = SigningKey(Parameters.private_key_self)    
+    framework = Parameters.framework    
     weights = Parameters.weights
     count = Parameters.count
     dont_show = Parameters.dont_show
@@ -93,29 +75,34 @@ def main(_argv):
 
      # configure video stream receiver
     receiver = vss.VideoStreamSubscriber(hostname, port)
-    print('RPi Stream -> Receiver Initialized')
+    print('Receiver Initialized')
     # time.sleep(1.0)
    
    
-    # configure gpu usage
-    config = ConfigProto()
-    config.gpu_options.allow_growth = True
-    session = InteractiveSession(config=config)
 
+    model = Model()
+    model.load_model('models_edgetpu/ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite')
+    model.load_labels('labels_edgetpu/coco_labels.txt')
+    model.set_confidence_level(0.3)
     # load model
-    if framework == 'tflite':
-        interpreter = tf.lite.Interpreter(model_path=weights)
-    else:
-        saved_model_loaded = tf.saved_model.load(
-            weights, tags=[tag_constants.SERVING])
+    # if framework == 'tflite':
+    #     interpreter = tf.lite.Interpreter(model_path=weights)
+    # else:
+    #     saved_model_loaded = tf.saved_model.load(
+    #         weights, tags=[tag_constants.SERVING])
 
     # read in all class names from config
-    class_names = utils.read_class_names(cfg.YOLO.CLASSES)
+    # class_names = utils.read_class_names(cfg.YOLO.CLASSES)
 
   
 
     # configure responder
     responder = re.Responder(hostname, sendingPort)
+
+
+    render = Render()
+
+
 
     # statistics info
     moving_average_points = 50
@@ -226,19 +213,7 @@ def main(_argv):
         # image preprocessing
 
         # region
-        original_image = cv2.cvtColor(decompressedImage, cv2.COLOR_BGR2RGB)
-
-        image_data = cv2.resize(
-            original_image, (input_size, input_size))  # 0.4ms
-
-        image_data = image_data / 255.  # 2.53ms
-
-        images_data = []
-
-        for i in range(1):
-            images_data.append(image_data)
-
-        images_data = np.asarray(images_data).astype(np.float32)  # 3.15ms
+        model.load_image_cv2_backend(decompressedImage)
 
         # endregion
 
@@ -247,29 +222,7 @@ def main(_argv):
         # inference
 
         # region
-        if framework == 'tflite':
-            interpreter.allocate_tensors()
-            input_details = interpreter.get_input_details()
-            output_details = interpreter.get_output_details()
-            interpreter.set_tensor(input_details[0]['index'], images_data)
-            interpreter.invoke()
-            pred = [interpreter.get_tensor(
-                output_details[i]['index']) for i in range(len(output_details))]
-            if model_to_use == 'yolov3' and tiny == True:
-                boxes, pred_conf = filter_boxes(
-                    pred[1], pred[0], score_threshold=0.25, input_shape=tf.constant([input_size, input_size]))
-            else:
-                boxes, pred_conf = filter_boxes(
-                    pred[0], pred[1], score_threshold=0.25, input_shape=tf.constant([input_size, input_size]))
-        else:
-            infer = saved_model_loaded.signatures['serving_default']
-            batch_data = tf.constant(images_data)
-            pred_bbox = infer(batch_data)
-            for key, value in pred_bbox.items():
-                boxes = value[:, :, 0:4]
-                pred_conf = value[:, :, 4:]
-
-        # endregion
+        class_ids, scores, boxes = model.inference()
 
         model_inferenced_time = time.perf_counter()
 
@@ -277,61 +230,10 @@ def main(_argv):
 
         # region
 
-        h = time.perf_counter()
+        render.set_image(decompressedImage)
+        boxtext = render.render_detection(model.labels, class_ids, boxes, decompressedImage.shape[1], decompressedImage.shape[0], (45, 227, 227), 3)
+        #render.render_fps(moving_average_fps.get_moving_average())
 
-        boxes, scores, classes, valid_detections = tf.image.combined_non_max_suppression(
-            boxes=tf.reshape(boxes, (tf.shape(boxes)[0], -1, 1, 4)),
-            scores=tf.reshape(
-                pred_conf, (tf.shape(pred_conf)[0], -1, tf.shape(pred_conf)[-1])),
-            max_output_size_per_class=50,
-            max_total_size=50,
-            iou_threshold=iou,
-            score_threshold=score
-        )  # 1.2ms
-
-        # format bounding boxes from normalized ymin, xmin, ymax, xmax ---> xmin, ymin, xmax, ymax
-        original_h, original_w, _ = original_image.shape
-
-        bboxes = utils.format_boxes(
-            boxes.numpy()[0], original_h, original_w)  # 1ms
-
-        # hold all detection data in one variable
-        pred_bbox = [bboxes, scores.numpy()[0], classes.numpy()[0],
-                     valid_detections.numpy()[0]]
-
-        # by default allow all classes in .names file
-        allowed_classes = list(class_names.values())
-
-        # custom allowed classes (uncomment line below to allow detections for only people)
-        #allowed_classes = ['person']
-
-        # if crop flag is enabled, crop each detection and save it as new image
-        if crop:
-            crop_path = os.path.join(
-                os.getcwd(), 'detections', 'crop', image_name)
-            try:
-                os.mkdir(crop_path)
-            except FileExistsError:
-                pass
-            crop_objects(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB),
-                         pred_bbox, crop_path, allowed_classes)
-
-        if count:
-            # count objects found
-            counted_classes = count_objects(
-                pred_bbox, by_class=False, allowed_classes=allowed_classes)
-            # loop through dict and print
-            for key, value in counted_classes.items():
-                print("Number of {}s: {}".format(key, value))
-            boxtext, image = utils.draw_bbox(
-                original_image, pred_bbox, info, counted_classes, allowed_classes=allowed_classes)
-        else:
-            boxtext, image = utils.draw_bbox(
-                original_image, pred_bbox, info, allowed_classes=allowed_classes)  # 0.5ms
-
-        image = Image.fromarray(image.astype(np.uint8))  # 0.3ms
-
-        # endregion
 
         if merkle_tree_interval == 0:
             boxtext = 'Image' + str(name[-2]) + ':;' + boxtext
@@ -466,13 +368,13 @@ def main(_argv):
         if not dont_show:
             # image.show()
 
-            image = cv2.cvtColor(np.array(image), cv2.COLOR_BGR2RGB)
-            cv2.imshow('raspberrypi', image)
+            #image = cv2.cvtColor(np.array(image), cv2.COLOR_BGR2RGB)
+            cv2.imshow('raspberrypi', decompressedImage)
 
             if cv2.waitKey(1) == ord('q'):
                 responder.respond('abort12345:6')                
                 sys.exit(
-                    'Contract aborted: Ended contract according to custom')
+                    'Contract aborted: Contractor ended contract according to custom')
 
         image_showed_time = time.perf_counter()
 
