@@ -17,14 +17,14 @@ This project lets you send a digitally signed image stream from an Outsourcer (R
 ## Demos
 
 ### Object Detection using Yolov4 with CPU/GPU
-Donwload this GIF if you want to see statistics printed in the consoles 
 <p align="center"><img src="data/helpers/demo.gif"\></p>
 
 ### Whole setup using Yolov4 with CPU/GPU
+Donwload this GIF if you want to see the statistics printed in the consoles.
 <p align="center"><img src="data/demo/Yolo-setup.gif"\></p>
 
 ### Whole setup using Mobilenet SSD V2 with Coral Edge USB Accelerator
-Donwload this GIF if you want to see statistics printed in the consoles
+Donwload this GIF if you want to see the statistics printed in the consoles.
 <p align="center"><img src="data/demo/EdgeTpu-Setup.gif"\></p>
 
 ## Supported Contract Violations
