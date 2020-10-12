@@ -81,11 +81,24 @@ def main():
     start_listening_time = time.perf_counter()
     while r.getConnectionEstablished() == False or r_verifier.getConnectionEstablished() == False:
         if time.perf_counter() - start_listening_time > 35:
+            fault = 0
+            if r_verifier.getConnectionEstablished() == False:
+                fault += 1
+            if r.getConnectionEstablished() == False:
+                fault += 1
+            
             r.close()
             r_verifier.close()
             time.sleep(1)
-            sys.exit(
-                'Contract aborted: Contractor did not connect in time. Possible Consquences for Contractor: Blacklist, Bad Review')
+            if fault == 0:
+                sys.exit(
+                    'Contract aborted: Contractor did not connect in time. Possible Consquences for Contractor: Blacklist, Bad Review')
+            if fault == 1:
+                sys.exit(
+                    'Contract aborted: Verifier did not connect in time. Possible Consquences for Verifier: Blacklist, Bad Review')
+            if fault == 2:
+                sys.exit(
+                    'Contract aborted: Contractor and Verifier did not connect in time. Possible Consquences for Contractor and Verifier: Blacklist, Bad Review')
         time.sleep(0.5)
 
     print('Connection with contractor and verfier established')
@@ -249,7 +262,7 @@ def main():
                     r.close()
                     r_verifier.close()
                     time.sleep(1)
-                    sys.exit('Contract aborted by contractor according to custom') 
+                    sys.exit('Contract aborted by contractor according to custom.') 
 
                 try:
                     sig = o.split(';--')[1].encode('latin1')
@@ -400,7 +413,7 @@ def main():
                             r_verifier.close()
                             time.sleep(1)
                             sys.exit(
-                                'Contract aborted: Contractor singature of root hash is ill formated. Possible Consquences for Contractor: Blacklist, Bad Review, Refuse of Payment for images from current interval')
+                                'Contract aborted: Contractor signature of root hash is ill formated. Possible Consquences for Contractor: Blacklist, Bad Review, Refuse of Payment for images from current interval')
 
                     
                         if abort_at_next_merkle_root:
@@ -442,7 +455,7 @@ def main():
                 r_verifier.close()
                 time.sleep(1)
                 sys.exit(
-                    'Contract aborted: Contractor response is ill formated. Possible Consquences for Contractor: Blacklist, Bad Review')
+                    'Contract aborted: Verifier response is ill formated. Possible Consquences for Verifier: Blacklist, Bad Review')
 
             try:
                 vk_verifier.verify(msg + verifier_contract_hash, sig)
@@ -451,7 +464,7 @@ def main():
                 r_verifier.close()
                 time.sleep(1)
                 sys.exit(                    
-                    'Contract aborted: Contractor singature does not match response. Possible Consquences for Contractor: Blacklist, Bad Review')
+                    'Contract aborted: Verifier singature does not match response. Possible Consquences for Verifier: Blacklist, Bad Review')
             responses_verifier.append(msg)
             signatures_verifier.append(sig)
 
