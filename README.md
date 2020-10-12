@@ -2,11 +2,17 @@
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE)
 
 
-Sending digitally signed image stream from raspberry pi to a pc in the local network using Pub/Sub. The remote PC performs object detection with Tensorflow using Yolov4 or Yolov3 as model. Detected bounding boxes, classes and confidence get signed by the remote PC before sending them back to the raspberry Pi using sockets
+This project lets you send a digitally signed image stream from an outsourcer (Raspberry pi) to two machines in the local network. One remote machine acts as a contractor and one acts as a verifier. The contractor receives all images while the outsourcer only receives random samples. Whenever the contractor and the verifier send back a signed object detection result belonging to the same image, the outsourcer checks if they are equal. At the end of a contract, signatures can be used as a proof to redeem payment or to convict a party of cheating.
+
+ Supported models for object detection on a regular GPU and CPU are Yolov4 and Yolov3 using Tensorflow, TFLite, and TensorRT (only determnistic) as the framework. Tiny weights and custom weights can be used as well.
+ 
+ Supported model for object detection on a Coral USB Accelerator is Mobilenet SSD V2.
+
+ When executing the multithreading version of the scripts, adding signatures to images and responses should not increase the processing time at all as inference is usually the bottleneck of the setup.   
 
 
 
-Works with YOLOv4, YOLOv4-tiny, YOLOv3, and YOLOv3-tiny using TensorFlow, TFLite and TensorRT (only determnistic).
+
 
 ## Demos
 
@@ -19,8 +25,38 @@ Works with YOLOv4, YOLOv4-tiny, YOLOv3, and YOLOv3-tiny using TensorFlow, TFLite
 ### Whole setup using Mobilenet SSD V2 with Coral Edge USB Accelerator
 <p align="center"><img src="data/demo/EdgeTpu-Setup.gif"\></p>
 
+## Supported Contract Violations
+Contract violations are distinguished bwetween (1) Quality of Experience (QOE) violations due to timeouts, or not receiving/acknowlidging enough outputs, and (2) Malicious behavior. Consequences of QOE violations can be blacklisting, and bad reviews (if Merkle Trees are used also refusing payment of last interval). Consequences of malicious behavior can be fines, and refusal of payment. Every party that is accused of malicious behavior has the right to contest if additional verifiers are available within a deadline.
 
 
+### QOE Viaolations
+#### Otsourcer perspective
+1. Contractor did not connect in time
+2. Verfier did not connect in time
+3. Contractor response is ill formated
+4. Verifier response is ill formated
+5. Contractor singature does not match response
+6. Verifier singature does not match response
+7. Contractor response delay rate is too high
+8. Verifier has failed to process enough samples in time
+9. No root hash received for current interval in time
+10. Merkle tree leaf node does not match earlier sent response
+11. Contractor signature of challenge response is incorrect
+12. Leaf is not contained in Merkle Tree
+13. Contractor signature of root hash received at challenge response does not match previous signed root hash
+14. Merkle Tree proof of membership challenge response was not received in time
+
+#### Contractor/Verifier perspective
+1. Outsourcer signature does not match input
+2. Outsourcer did not acknowledge enough ouputs
+3. Outsourcer timed out
+
+
+### Malicious Behaviors
+1. Merkle Tree is built on responses unequal to responses of the verifier
+2. Contractor output and verifier sample are not equal
+
+By changing **parameters.py** you can modify the thresholds of QOE vioations 
 
 ## Getting Started
 
@@ -30,12 +66,12 @@ Works with YOLOv4, YOLOv4-tiny, YOLOv3, and YOLOv3-tiny using TensorFlow, TFLite
 
 ```bash
 # Tensorflow CPU
-conda env create -f conda-cpu.yml
-conda activate yolov4-cpu
+conda env create -f verified-outsourcing-cpu.yml
+conda activate verified-outsourcing-cpu
 
 # Tensorflow GPU
-conda env create -f conda-gpu.yml
-conda activate yolov4-gpu
+conda env create -f verified-outsourcing-gpu.yml
+conda activate verified-outsourcing-gpu
 ```
 
 #### Pip
@@ -51,7 +87,7 @@ Make sure to use CUDA Toolkit version 10.1 as it is the proper version for the T
 https://developer.nvidia.com/cuda-10.1-download-archive-update2
 
 
-#### Edge TPU drivers (If you are planning to use a Coral Edge USB Accelerator)
+#### Edge TPU drivers (If you are planning to use a Coral USB Accelerator)
 https://coral.ai/docs/accelerator/get-started/
 
 ### Outsourcer (Raspberry Pi)
@@ -125,44 +161,14 @@ Afterwards you can start **outsourcer.py** on the Raspberry Pi and either **cont
 
 If everything was set up correctly, the outsourcer will start sending live webcam video to contractor and verifier and receive results. You can cancel the contract according to custom if you press **q** in the CV2 output of verifier or contractor.  
 
-## Supported Contract Violations
-Contract violations are distinguished bwetween (1) Quality of Experience (QOE) violations due to timeouts, or not receiving/acknowlidging enough outputs, and (2) Malicious behavior. Consequences of QOE violations can be blacklisting, and bad reviews (if Merkle Trees are used also refusing payment of last interval). Consequences of malicious behavior can be fines, and refusal of payment. Every party that is accused of malicious behavior has the right to contest if additional verifiers are available within a deadline.
-
-### QOE Viaolations
-#### Otsourcer perspective
-1. Contractor did not connect in time
-2. Verfier did not connect in time
-3. Contractor response is ill formated
-4. Verifier response is ill formated
-5. Contractor singature does not match response
-6. Verifier singature does not match response
-7. Contractor response delay rate is too high
-8. Verifier has failed to process enough samples in time
-9. No root hash received for current interval in time
-10. Merkle tree leaf node does not match earlier sent response
-11. Contractor signature of challenge response is incorrect
-12. Leaf is not contained in Merkle Tree
-13. Contractor signature of root hash received at challenge response does not match previous signed root hash
-14. Merkle Tree proof of membership challenge response was not received in time
-
-#### Contractor/Verifier perspective
-1. Outsourcer signature does not match input
-2. Outsourcer did not acknowledge enough ouputs
-3. Outsourcer timed out
-
-
-### Malicious Behaviors
-1. Merkle Tree is built on responses unequal to responses of the verifier
-2. Contractor output and verifier sample are not equal
 
 
 ## References  
 
-   This repository builds on the following existing repositories:
+   This repository re-uses components of the following existing repositories:
    
-   https://github.com/theAIGuysCode/yolov4-custom-functions - To run Yolov4 with tensorflow
-   and get formatted outputs
+   https://github.com/theAIGuysCode/yolov4-custom-functions - To run Yolov4 with tensorflow and get formatted outputs
    
-   https://github.com/redlogo/RPi-Stream - To setup a raspberry Pi image stream and use a Coral Edge TPU for inferencing
+   https://github.com/redlogo/RPi-Stream - To setup a Raspberry Pi image stream and use a Coral Edge TPU for inferencing
    
    
