@@ -8,7 +8,10 @@ Sending digitally signed image stream from raspberry pi to a pc in the local net
 
 Works with YOLOv4, YOLOv4-tiny, YOLOv3, and YOLOv3-tiny using TensorFlow, TFLite and TensorRT (only determnistic).
 
-### Demo of Object Detection
+### Demo of Object Detection using Yolov4 with CPU/GPU
+<p align="center"><img src="data/demo/Yolo-setup.gif"\></p>
+
+### Demo of Object Detection using Mobilenet SSD V2 with Coral Edge USB Accelerator
 <p align="center"><img src="data/demo/Yolo-setup.gif"\></p>
 
 ## Currently Supported Custom Functions and Flags
