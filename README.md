@@ -12,7 +12,7 @@ Works with YOLOv4, YOLOv4-tiny, YOLOv3, and YOLOv3-tiny using TensorFlow, TFLite
 <p align="center"><img src="data/demo/Yolo-setup.gif"\></p>
 
 ### Demo of Object Detection using Mobilenet SSD V2 with Coral Edge USB Accelerator
-<p align="center"><img src="data/demo/EdgeTpu.gif"\></p>
+<p align="center"><img src="data/demo/EdgeTpu-Setup.gif"\></p>
 
 ## Currently Supported Custom Functions and Flags
 * [x] [Counting Objects (total objects and per class)](#counting)
