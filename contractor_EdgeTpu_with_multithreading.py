@@ -1,6 +1,5 @@
-"""pub_sub_receive.py -- receive OpenCV stream using PUB SUB."""
-
-
+# Main class of a contractor or verifier using an Edge TPU with the use of threading
+# Paramters associated with this class including if this device should act as a contractor or verifier can be set in parameters.py
 from parameters import ParticipantData
 from parameters import Parameters
 from parameters import OutsourceContract
@@ -30,12 +29,6 @@ from utilities.render import Render
 
 
 
-
-
-
-
-
-
 def main(_argv):
 
     # get paramters and contract details
@@ -61,11 +54,6 @@ def main(_argv):
 
     dont_show = Parameters.dont_show
 
-
-
-    #sk = SigningKey(Parameters.private_key_contractor)
-
-
     framework = Parameters.framework
 
     weights = Parameters.weights
@@ -74,53 +62,36 @@ def main(_argv):
     crop = Parameters.crop
     iou = Parameters.iou
     score = Parameters.score
-    input_size = Parameters.input_size
+    input_size = Parameters.input_size    
+
+    edgeTPU_model_path = Parameters.edgeTPU_model_path
+    edgeTPU_label_path = Parameters.edgeTPU_label_Path
+    edgeTPU_confidence_level = Parameters.EdgeTPU_confidence_level 
     
-    
-    
 
 
+     # configure thread handler to handle T2 (receiving), T3 (decompressing, verifying), and T4 (postprocssing, signing, sending, displaying) 
 
-
-
-
-
-
-    # print(contractHash)
-
-     # configure video stream receiver
     receiver = vss3.ThreadHandler(hostname, port, merkle_tree_interval, contractHash, minimum_receive_rate_from_contractor, vk_Bytes, input_size, sendingPort)
     
+
+    # configure model   
+    
     model = Model()
-    model.load_model('models_edgetpu/ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite')
-    model.load_labels('labels_edgetpu/coco_labels.txt')
-    model.set_confidence_level(0.3)
+    model.load_model(edgeTPU_model_path)
+    model.load_labels(edgeTPU_label_path)
+    model.set_confidence_level(edgeTPU_confidence_level)
     
     
     print('Receiver Initialized')
-    #time.sleep(4.0)
-    
-    #frameSender = FrameSender(hostname, sendingPort, merkle_tree_interval, contractHash)
    
-
-  
-
-    # configure responder
-    #responder = re.Responder(hostname, sendingPort)
-    #responder = re.Responder(hostname, sendingPort)
-
-    # statistics info
+    
+    # configure and iniitialize statistic variables
+   
     moving_average_points = 50
 
-    # statistics
+    
     moving_average_fps = MovingAverage(moving_average_points)
-    #moving_average_receive_time = MovingAverage(moving_average_points)
-    #moving_average_decompress_time = MovingAverage(moving_average_points)
-
-    #moving_average_model_load_image_time = MovingAverage(moving_average_points)
-    #moving_average_img_preprocessing_time = MovingAverage(
-    #    moving_average_points)
-
     
     moving_average_thread3_waiting_time = MovingAverage(moving_average_points)
     moving_average_thread4_waiting_time = MovingAverage(moving_average_points)
@@ -131,147 +102,51 @@ def main(_argv):
     moving_average_img_preprocessing_time = MovingAverage(
         moving_average_points)
 
-    #moving_average_reply_time = MovingAverage(moving_average_points)
-    #moving_average_image_show_time = MovingAverage(moving_average_points)
-    #moving_average_verify_image_sig_time = MovingAverage(moving_average_points)
-
-    #moving_average_response_signing_time = MovingAverage(moving_average_points)
 
     image_count = 0
 
     a = 0
     b = 0
 
-    # if merkle_tree_interval > 0:
-    #     mt = MerkleTools()
-    #     mtOld = MerkleTools()
-    #     interval_count = 0
-    #     mtOld_leaf_indices = {}
-    #     mt_leaf_indices = {}
-    #     #rendundancy_counter = 0
-    #     #rendundancy_counter2 = 0
-    #     current_challenge = 1
-    #     merkle_root = ''
-    #     #stringsend = ''
-    #     last_challenge = 0
-
     while True:
 
         start_time = time.perf_counter()
 
-        # receive image
+        # receive decompressed image from Thread 3
 
-        # region
-
-        # name[:-2] image signature, name
         preprocessOutput = receiver.receive2()
 
-        thread3_waiting_time = time.perf_counter()
-        
-        #images_data = preprocessOutput[0]
+        thread3_waiting_time = time.perf_counter()        
+   
         decompressedImage = preprocessOutput[0]
         name = preprocessOutput[1]
-        #original_image = preprocessOutput[2]
-        #compressed = preprocessOutput[1]
-        #decompressedImage = preprocessOutput[2]
 
+        # image preprocessing
 
-        # if merkle_tree_interval > 0:
-        #     outsorucer_signature = name[:-5]
-        #     outsourcer_image_count = name[-5]
-        #     outsourcer_number_of_outputs_received = name[-4]
-        #     outsourcer_random_number = name[-3]
-        #     outsourcer_interval_count = name[-2]
-        #     outsourcer_time_to_challenge = bool(name[-1])            
-
-
-
-
-        #received_time = time.perf_counter()
-        
-
-        # decompress image
-
-
-        # endregion
-
-        #decompressed_time = time.perf_counter()
-
-        # verify image  (verify if signature matches image, contract hash and image count, and number of outptuts received)
-
-
-       
-       
-        #print(name[-2], image_count, name[-3])
-
-        #verify_time = time.perf_counter()
-
-        model.load_image_cv2_backend(decompressedImage)
-
-        # endregion
+        model.load_image_cv2_backend(decompressedImage)  
 
         image_preprocessing_time = time.perf_counter()
 
         # inference
-
-        # region
-        class_ids, scores, boxes = model.inference()
-
-        # endregion
+    
+        class_ids, scores, boxes = model.inference()  
 
         model_inferenced_time = time.perf_counter()
 
-        # image postprocessing
+        # Transfer inference results to thread 4, wait if it is not finished with last image yet
 
-        # region
-
-        #h = time.perf_counter()
-
-
-
-
-
-        # endregion
-
-      
-
-
-        
-        
-
-        #image_postprocessing_time = time.perf_counter()
-
-        # sign message ->need to add image_count/interval_count (for merkle tree sig), contract hash to output and verificaton
-        #frameSender.putData((boxtext, image))
         receiver.putData((decompressedImage, name, image_count, model.labels, class_ids, boxes))
-
 
 
         thread4_waiting_time = time.perf_counter()
 
-        #response_signing_time = time.perf_counter()
 
-        # print(response_signing_time- image_postprocessing_time)
-
-        #replied_time = time.perf_counter()
-
-        #image_showed_time = time.perf_counter()
 
         
 
         # statistics
 
         moving_average_fps.add(1 / (thread4_waiting_time - start_time))
-
-        #moving_average_receive_time.add(received_time - start_time)
-
-        #moving_average_decompress_time.add(decompressed_time - received_time)
-
-        #moving_average_verify_image_sig_time.add(
-        #   verify_time - decompressed_time)
-
-        #moving_average_img_preprocessing_time.add(
-        #    image_preprocessing_time - verify_time)
         
         moving_average_thread3_waiting_time.add(thread3_waiting_time - start_time)
 
@@ -283,13 +158,6 @@ def main(_argv):
         moving_average_model_inference_time.add(
             model_inferenced_time - image_preprocessing_time)
 
-        #moving_average_response_signing_time.add(
-        #    response_signing_time - image_postprocessing_time)  # adjust for merkle root
-
-        #moving_average_reply_time.add(replied_time - response_signing_time)
-
-        #moving_average_image_show_time.add(image_showed_time - replied_time)
-
         moving_average_thread4_waiting_time.add(thread4_waiting_time - model_inferenced_time)
 
         total_time = moving_average_thread3_waiting_time.get_moving_average() \
@@ -297,6 +165,7 @@ def main(_argv):
             + moving_average_img_preprocessing_time.get_moving_average() \
             + moving_average_thread4_waiting_time.get_moving_average() 
 
+        # count seconds it takes to process 400 images after a 800 frames warm-up time
         if(image_count == 800):
             a = time.perf_counter()
         if(image_count == 1200):
@@ -336,20 +205,7 @@ def main(_argv):
         # counter
         image_count += 1
 
-    # except (KeyboardInterrupt, SystemExit):
-    #     print('Exit due to keyboard interrupt')
-    # except Exception as ex:
-    #     print('Python error with no Exception handler:')
-    #     print('Traceback error:', ex)
-    #     traceback.print_exc()
-    # finally:
-    #     receiver.close()
-    #     sys.exit()
 
 
 if __name__ == '__main__':
-    # try:
-    #     app.run(main)
-    # except SystemExit:
-    #     pass
     app.run(main)

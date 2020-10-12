@@ -1,11 +1,7 @@
 import socket
 import select
 
-
-#header_Length = 10
-#ip = '192.168.178.34'
-#port = 1234
-
+#adds a message header indicating message length to a message and sends it to specified ip and port
 
 class Responder:
 
@@ -18,7 +14,7 @@ class Responder:
     def respond(self, message):
 
         message = f'{len(message):<10}' + message
-        #print(message)
+        
 
         self.responder.send(message.encode('latin1'))
 

@@ -1,3 +1,4 @@
+#class to send images over a socket
 import time
 
 import cv2
@@ -5,10 +6,6 @@ import imagezmq
 
 import hmac
 import hashlib
-
-#import sys
-
-#from ecdsa import SigningKey
 
 from nacl.signing import SigningKey
 
@@ -50,12 +47,7 @@ class Sender:
         self.sender.send_image(name, image)
 
     def send_image_compressed_Merkle(self, image_count, image, contractHash, number_of_outputs_received, random_number, interval_count, time_to_challenge):
-        """
-        Send compressed image (jpg), high efficiency
-        :param name: Name.
-        :param image: Image input as numpy array.
-        :return: statistics of how long time it takes to compress, and to send image
-        """
+  
         start_time = time.perf_counter()
 
         # compress image
@@ -95,12 +87,7 @@ class Sender:
         return compress_finish_time - start_time, sign_image_time - compress_finish_time,  send_time - sign_image_time
 
     def send_image_compressed_Merkle_with_return(self, image_count, image, contractHash, number_of_outputs_received, random_number, interval_count, time_to_challenge):
-        """
-        Send compressed image (jpg), high efficiency
-        :param name: Name.
-        :param image: Image input as numpy array.
-        :return: statistics of how long time it takes to compress, and to send image
-        """
+    
         start_time = time.perf_counter()
 
         # compress image
@@ -131,7 +118,7 @@ class Sender:
 
         sign_image_time = time.perf_counter()
 
-        #print(intMessage[-2], intMessage[-3], number_of_outputs_received, image_count)
+        
 
         self.sender.send_jpg(intMessage, compressed_image)
 
@@ -140,12 +127,7 @@ class Sender:
         return compress_finish_time - start_time, sign_image_time - compress_finish_time,  send_time - sign_image_time, compressed_image
     
     def send_image_compressed_with_input(self, image_count, image, contractHash, number_of_outputs_received, compressed_image):
-        """
-        Send compressed image (jpg), high efficiency
-        :param name: Name.
-        :param image: Image input as numpy array.
-        :return: statistics of how long time it takes to compress, and to send image
-        """
+    
         start_time = time.perf_counter()
 
 
@@ -156,7 +138,7 @@ class Sender:
 
         message = self.pk.sign(inputs_to_be_signed).signature
         intMessage = list(message)
-        #name = intMessage
+        
         intMessage.append(image_count)  # append image count
 
         # append number of outputs received to commit to a paymnet
@@ -171,12 +153,7 @@ class Sender:
         return compress_finish_time - start_time, sign_image_time - compress_finish_time,  send_time - sign_image_time
 
     def send_image_compressed(self, image_count, image, contractHash, number_of_outputs_received):
-        """
-        Send compressed image (jpg), high efficiency
-        :param name: Name.
-        :param image: Image input as numpy array.
-        :return: statistics of how long time it takes to compress, and to send image
-        """
+      
         start_time = time.perf_counter()
 
         # compress image
@@ -189,7 +166,7 @@ class Sender:
 
         message = self.pk.sign(inputs_to_be_signed).signature
         intMessage = list(message)
-        #name = intMessage
+        
         intMessage.append(image_count)  # append image count
 
         # append number of outputs received to commit to a paymnet
@@ -204,12 +181,7 @@ class Sender:
         return compress_finish_time - start_time, sign_image_time - compress_finish_time,  send_time - sign_image_time
 
     def send_image_compressed_with_return(self, image_count, image, contractHash, number_of_outputs_received):
-        """
-        Send compressed image (jpg), high efficiency
-        :param name: Name.
-        :param image: Image input as numpy array.
-        :return: statistics of how long time it takes to compress, and to send image
-        """
+     
         start_time = time.perf_counter()
 
         # compress image
@@ -222,7 +194,7 @@ class Sender:
 
         message = self.pk.sign(inputs_to_be_signed).signature
         intMessage = list(message)
-        #name = intMessage
+        
         intMessage.append(image_count)  # append image count
 
         # append number of outputs received to commit to a paymnet
@@ -241,8 +213,3 @@ class Sender:
             ".jpg", image, [int(cv2.IMWRITE_JPEG_QUALITY), self.quality])        
         self.sender.send_jpg('abort', image)
 
-    # def manualCancel(self):
-    #     if cv2.waitKey(1) == ord('q'):
-    #             #responder.respond('abort')                
-    #         sys.exit(
-    #             'Contract aborted: Outspurcer ended contract according to custom')

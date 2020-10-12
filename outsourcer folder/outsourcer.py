@@ -1,3 +1,5 @@
+# Main class of an outsourcer
+# Paramters associated with this class can be set in parameters.py
 import time
 
 from sender.rpi_camera import RPiCamera
@@ -7,10 +9,6 @@ from utilities.stats import MovingAverage
 
 from nacl.signing import SigningKey
 from nacl.signing import VerifyKey
-
-# from ecdsa import SigningKey
-
-# from ecdsa import VerifyingKey
 
 from imageCounter import ImageCounter
 
@@ -31,14 +29,8 @@ import random
 
 
 def main():
-    """
-    main function interface
-    :return: nothing
-    """
 
-    pk = SigningKey(Parameters.private_key_outsourcer)
-
-    # print(pk.verify_key)
+    pk = SigningKey(Parameters.private_key_outsourcer)   
 
     vk = VerifyKey(OutsourceContract.public_key_contractor)
     vk_verifier = VerifyKey(VerifierContract.public_key_verifier)
@@ -112,18 +104,15 @@ def main():
     output_counter_verifier = 0
 
     lastSample = -1  # last sample index that was compared
-    #lastVerifierSample = -1 #
-    #lastOutsourcerSample = -1
+  
     saved_compressed_sample_image = b'' #stores the compressed last sample image. If signed, unmatching responses are received any third party can verify with this saved image which response is not ocrrect
 
     contractHash = Helperfunctions.hashContract().encode('latin1')
 
     verifier_contract_hash = Helperfunctions.hashVerifierContract().encode('latin1')
 
-    # sampling_start_count = 0 #saves image_count at the time of starting a new sample
-    sampling_index = -1
-
-    # interval_samples = sampling_interval * minimum_response_rate #interval to saves image samples
+    
+    sampling_index = -1    
 
     verifier_sample_processed = 0
     verifier_sample_missed = 0 #how many samples were missed in total
@@ -134,8 +123,7 @@ def main():
         interval_count = 0
         time_to_challenge = False
         next_merkle_chall = 0
-        curr_merkle_chall = 0
-        #random_number = random.randint(0, merkle_tree_interval - 1)
+        curr_merkle_chall = 0   
         current_root_hash = ''
         next_merkle_response = ''
         curr_merkle_response = ''
@@ -193,11 +181,11 @@ def main():
 
         camera_time = time.perf_counter()
 
-        # if index is at random sample, send random sample to verifier
+        
 
         if merkle_tree_interval == 0:
 
-
+            # if index is at random sample, send random sample to verifier
             if sampling_index == image_counter.getInputCounter(): #send image to both outsourcer and verifier
                 compress_time, sign_time, send_time, compressed = image_sender.send_image_compressed_with_return(
                     image_counter.getInputCounter(), image, contractHash, image_counter.getNumberofOutputsReceived())  
@@ -219,7 +207,7 @@ def main():
         else:    
             
             
-            # reuse compressed image and just add signature
+            
             # if sampling_index == image_counter.getInputCounter() or sampling_index + sampling_interval < image_counter.getInputCounter(): # only for high frequency to reduce receive time
             if sampling_index == image_counter.getInputCounter(): #send image to both outsourcer and verifier
                 
@@ -255,6 +243,7 @@ def main():
         if merkle_tree_interval == 0:
 
             for o in output:
+                #print('Outsourcer Response:', o)   #outputPrint 
                 if o[:5] == 'abort':
                     image_sender_verifier.send_abort(image)
                     r.close()
@@ -292,6 +281,7 @@ def main():
                 sys.exit('Contract aborted: No root hash received for current interval in time. Possible Consquences for Contractor: Blacklist, Bad Review, Refuse of Payment for images from current interval')
 
             for o in output:
+                #print('Outsourcer Response:', o)   #outputPrint
                 if o[:5] == 'abort':                
                     image_sender_verifier.send_abort(image)
                     r.close()
@@ -328,8 +318,8 @@ def main():
                             
                             if sample_received_in_interval == interval_count -1: #skip this part of the challenge if no sample was compared in last interval count
                                 mt.add_leaf(curr_merkle_response.decode('latin1'), True) #get last response into same format as leaf_node
-                                if leaf_node != mt.get_leaf(0):
-                                    print('Merkle tree leaf node does not match earlier sent response')
+                                #if leaf_node != mt.get_leaf(0):
+                                  #  print('Merkle tree leaf node does not match earlier sent response')
                                 #else:
                                     #print('Success')
                             
@@ -436,7 +426,9 @@ def main():
         output_verifier = r_verifier.getAll()
 
         for o in output_verifier:
+            #print('Verfifier Response:', o)   #outputPrint 
             if o[:5] == 'abort':
+                
                 image_sender.send_abort(image)
                 r.close()
                 r_verifier.close()
@@ -478,16 +470,7 @@ def main():
                     sampling_index, responses_verifier[-1], signatures_verifier[-1])
             
 
-        # sample_checked = False
-        # if outsourcerSample[0] == verifierSample[0]:
-        #     sample_checked = True
-        #     #compare resp
-        #     if lastSample != outsourcerSample[0]:
-        #         lastSample = outsourcerSample[0]
-        #         if outsourcerSample[1] == verifierSample[1]:
-        #             print(True, outsourcerSample[1])
-        #         else:
-        #             print(False, outsourcerSample[1], verifierSample[1])
+    
 
         sample_checked = False
         if sampling_index in verifier_sample_dict and sampling_index in outsourcer_sample_dict:
@@ -498,7 +481,8 @@ def main():
                 if lastSample != outsourcer_sample_dict[sampling_index][0]:
                     lastSample = outsourcer_sample_dict[sampling_index][0]
                     if outsourcer_sample_dict[sampling_index][1] == verifier_sample_dict[sampling_index][1]:
-                        #print(True, outsourcer_sample_dict[sampling_index][1])
+                        #print('The following sample was found to be equal:', outsourcer_sample_dict[sampling_index][1]) #outputPrint
+                         
  
                         if merkle_tree_interval > 0:
                             next_merkle_chall = outsourcer_sample_dict[sampling_index][0]
@@ -549,13 +533,9 @@ def main():
                             sys.exit(
                     'Contract aborted: Verifier has failed to process enough samples in time. Possible Consquences for Verifier: Bad Review, Blacklist')
 
-                
-
-        
-        
-        #image_sender.manualCancel()
-        
-        
+                    
+             
+               
         verify_time = time.perf_counter()
         if(OutsourceContract.criteria == 'Atleast 2 objects detected'):
             for st in responses:
@@ -581,12 +561,7 @@ def main():
                 sys.exit(
                     'Contract aborted: Contractor response rate is too low. Possible Consquences for Contractor: Bad Review, Blacklist')
 
-        # if(image_counter.getInputCounter() - image_counter.getOutputCounter() < 60):
-        #     if image_counter.getInputCounter() > 1000:
-        #         print('b', image_counter.getOutputCounter() - image_counter.getInputCounter())
-
-        # if frames_behind > 60:
-        #     print('b', frames_behind)
+    
 
         if(image_counter.getNumberofOutputsReceived() == 800):
             a = time.perf_counter()
@@ -653,8 +628,7 @@ def main():
         # counter
         image_counter.increaseInputCounter()
 
-       # print(c - a)
-        # a = time.perf_counter()
+
 
 
 if __name__ == '__main__':

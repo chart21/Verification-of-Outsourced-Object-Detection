@@ -1,5 +1,7 @@
-import sys
+#This class always fetches the newest available frame from the socket in a separate thread
+# By consuming all frames it prevents of frames being piled up in a queue at the socket
 
+import sys
 import socket
 import traceback
 import cv2
@@ -7,9 +9,7 @@ from imutils.video import VideoStream
 import imagezmq
 import threading
 import numpy as np
-#from time import sleep
 import time
-
 
 class VideoStreamSubscriber:
 
@@ -23,20 +23,11 @@ class VideoStreamSubscriber:
         self._thread.start()
 
     def receive(self, timeout=15.0):
-        #a = 0        
-        #waited = False
-        #if not self._data_ready.is_set() :
-            #a = time.perf_counter()
-            #waited = True       
-        
-            
+
         flag = self._data_ready.wait(timeout=timeout)
         if not flag:
             raise TimeoutError(
                 "Contract aborted: Outsourcer at tcp://{}:{}".format(self.hostname, self.port) + 'timed out. Possible Consquences for Outsourcer: Blacklist, Bad Review')
-
-        #if waited :
-            #print('Waited', (time.perf_counter() - a)*1000)
 
         self._data_ready.clear()
 
@@ -45,20 +36,10 @@ class VideoStreamSubscriber:
 
     def _run(self):
         receiver = imagezmq.ImageHub("tcp://{}:{}".format(self.hostname, self.port), REQ_REP=False)
-        print('here6')
-        #countera = 0
-        #counterb = 0
+ 
         while not self._stop:                      
             self._data = receiver.recv_jpg()
-            
-            
-            #countera += 1
-            #print(countera)
-            #f = time.perf_counter()
-            #time.sleep(0.05)
-            #counterb += 1
-            
-            #print(counterb, time.perf_counter() - f)
+  
             self._data_ready.set()
             
 

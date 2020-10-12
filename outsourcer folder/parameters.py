@@ -1,5 +1,7 @@
+#Class for setting all kinds of differents parameters
 import hashlib
 
+# The outsource contract defines the agreement between outsourcer and contractor and has to be set identically for both parties
 class OutsourceContract:
     contract_uid = 0 #contracts have to have a unique id to esnure that each contract hash is unique
     public_key_outsourcer = b'e\x0fy\xfd\xe6\x16\x1f\xe0\x16B\xf2\xdb\x1d\x7f\xc9\xbcLCo\xa7\xa6c\x17\xbf\x8fo\xc8[\x07|bL'
@@ -11,12 +13,13 @@ class OutsourceContract:
     fine_contractor = 0
     model = 'yolov4' #model to use, possible choices are yolov4, yolov3
     tiny = True #whether to use tiny weigths for higher performance
-    merkle_tree_interval = 0 # 0: Do not use Merkle Tree but sing every output image, >0: Specifies the intervals at wich a Merkle Tree root is signed and sent
-    criteria = 'Atleast 2 objects detected'   #Specifies if all outputs should be sent back or only outputs that fulfill a certain criteria (e.g certain event happens), criterias should be combined with Merkle Trees to ensure overall consistency
-    deposit_verfier = 10000000
+    merkle_tree_interval = 128 # 0: Do not use Merkle Tree but sing every output image, >0: Specifies the intervals at wich a Merkle Tree root is signed and sent
+    criteria = 'all'   #Specifies if all outputs should be sent back or only outputs that fulfill a certain criteria (e.g certain event happens), criterias should be combined with Merkle Trees to to maximize efficiency
+    deposit_verfier = 10000000 #verifier details are also set in outsource contract because the contractor creates a list of all available verifier that meet requirements of the outsourcer
     fine_verifier = 500000
     reward_per_image_verifier = 1
-    
+
+# The outsourcre contract defines the agreement between outsourcer and verifier and has to be set identically for both parties    
 class VerifierContract:
     contract_uid = 0 #contracts have to have a unique id to esnure that each contract hash is unique
     public_key_outsourcer = b'e\x0fy\xfd\xe6\x16\x1f\xe0\x16B\xf2\xdb\x1d\x7f\xc9\xbcLCo\xa7\xa6c\x17\xbf\x8fo\xc8[\x07|bL'
@@ -29,22 +32,18 @@ class VerifierContract:
     model = 'yolov4' #model to use, possible choices are yolov4, yolov3
     tiny = True #whether to use tiny weigths for higher performance
 
-    deposit_verfier = 10000000
-    fine_verifier = 500000
-    reward_per_image_verifier = 1
 
-
-
+# class for setting non-contract-related information
 class Parameters:
     receiver_ip = "192.168.178.34" #outsourcer, own ip to initialize image hub
-    sending_port = 5555 #port to send images to
-    sending_port_verifier = 5556
+    sending_port = 5555 #port to send images to meant for contractor
+    sending_port_verifier = 5556 #port to send images to meant for outsourcer
     private_key_outsourcer = b'\x9f\x1f\r\xab\xc6\x8bG [\xa6\x96\xf5\xeeJ\xc0"\xa3\x89\x18\xb4\xa2\xe0\xd1O\xa9\xce$\xe3\x98\xa9/\xf8'
     framework = '' #tflite, tfRT, tf
-    receiver_port = 1234 #port to receive replies from
-    receiver_port_verfier = 1235
+    receiver_port = 1234 #port to receive replies from contractor
+    receiver_port_verfier = 1235 #port to receive replies from verifier
 
-    input_size = 300
+    input_size = 416 # input size of images. Yolo takes 416 and Mobilenet takes 300 as native input size
     quality = 65
 
 
@@ -54,8 +53,7 @@ class Parameters:
 
     moving_average_points = 50
 
-    #  '192.168.178.34'
-    #port_receiving = 1234
+
     maxmium_number_of_frames_ahead = 20 #if the frame delay of a contractor gets too high, the contract gets canceled
     minimum_response_rate = 0 #atleast x% of images have to get a response
     warm_up_time = 1500 #number of frames that vialtion of above QOE criteria are not leading to contract abortion (Can be used for handover)
@@ -75,22 +73,17 @@ class Parameters:
 
 
 
-
+# Dummy class
 class ParticipantData:
     balance_outsourcer = 10000
     balance_contractor = 10000
     balance_verifier = 10000
 
 
-
+#Helper class to calculate contract hashes with SHA3-256
 class Helperfunctions:
     
     def hashContract():
-       #contract_as_string = ''
-       #for attributes in OutsourceContract:
-       #    contract_as_string += str(attributes)
-       #    contract_as_string += ';'
-       #print(vars(OutsourceContract))
        contractHash = hashlib.sha3_256(str(vars(OutsourceContract)).encode('latin1'))
        return contractHash.hexdigest()
 

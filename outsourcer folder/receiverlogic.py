@@ -1,3 +1,4 @@
+# This class receives responses from a specific ip and port and saves them in a queue
 import socket
 import threading
 import time
@@ -49,7 +50,7 @@ class Receiver:
     def _run(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
-        # now our endpoint knows about the OTHER endpoint.
+        
         self.s.bind((self._ip, self._port))
         self.s.listen(0)
         self.clientsocket, self.address = self.s.accept()
@@ -73,12 +74,11 @@ class Receiver:
                 msg = self.clientsocket.recv(msglen)
                 full_msg = msg.decode('latin1')
                 self._q.put(full_msg)
-                # if(len(full_msg) > 2) :
+                
                 self._image_counter.setOutputCounter(
                     int(full_msg[5:].split(':', 1)[0]))
                 new_msg = True
-
-                #print(self._image_counter.getNumberofOutputsReceived(), self._image_counter.getInputCounter(),full_msg[5:].split(':', 1)[0])
+                
         self.s.close()
 
         

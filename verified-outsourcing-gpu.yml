@@ -1,4 +1,4 @@
-name: yolov4-gpu-custom
+name: verified-outsourcing-gpu
 
 dependencies:
   - python==3.7
