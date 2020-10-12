@@ -281,7 +281,7 @@ def main():
                     r_verifier.close()
                     time.sleep(1)
                     sys.exit(
-                        'Contract aborted: Contractor singature does not match response. Possible Consquences for Contractor: Blacklist, Bad Review')
+                        'Contract aborted: Contractor signature does not match response. Possible Consquences for Contractor: Blacklist, Bad Review')
                 responses.append(msg)
                 signatures_outsourcer.append(sig)
 
@@ -350,7 +350,7 @@ def main():
                                     r_verifier.close()
                                     time.sleep(1)
                                     sys.exit(
-                                        'Contract aborted: Contractor singature of challenge response is incorrect. Possible Consquences for Contractor: Blacklist, Bad Review, Refuse of Payment for images from current interval')
+                                        'Contract aborted: Contractor signature of challenge response is incorrect. Possible Consquences for Contractor: Blacklist, Bad Review, Refuse of Payment for images from current interval')
 
                                 try:
                                     merkle_proof_of_membership = mt.validate_proof(
@@ -464,7 +464,7 @@ def main():
                 r_verifier.close()
                 time.sleep(1)
                 sys.exit(                    
-                    'Contract aborted: Verifier singature does not match response. Possible Consquences for Verifier: Blacklist, Bad Review')
+                    'Contract aborted: Verifier signature does not match response. Possible Consquences for Verifier: Blacklist, Bad Review')
             responses_verifier.append(msg)
             signatures_verifier.append(sig)
 
