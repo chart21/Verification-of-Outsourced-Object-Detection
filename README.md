@@ -2,7 +2,7 @@
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE)
 
 
-This project lets you send a digitally signed image stream from an Outsourcer (Raspberry pi) to two machines in the local network. One remote machine acts as a Contractor and one acts as a Verifier. The Contractor receives all images while the Outsourcer only receives random samples. Whenever the Contractor and the Verifier send back a signed object detection result belonging to the same image, the Outsourcer checks if they are equal. At the end of a contract, signatures can be used as a proof to redeem payment or to convict a party of cheating.
+This project lets you send a digitally signed image stream from an Outsourcer (Raspberry pi) to two machines in the local network. One remote machine acts as a Contractor and the other one acts as a Verifier. The Contractor receives all images while the Outsourcer only receives random samples. Whenever the Contractor and the Verifier send back a signed object detection result belonging to the same image, the Outsourcer checks if both results are equal. At the end of a contract, signatures can be used as a proof to redeem payment or to convict a party of cheating.
 
  Supported models for object detection on a regular GPU and CPU are Yolov4 and Yolov3 using Tensorflow, TFLite, and TensorRT (only deterministic) as the framework. Tiny weights and custom weights can be used as well.
  
