@@ -94,7 +94,7 @@ https://developer.nvidia.com/cuda-10.1-download-archive-update2
 https://coral.ai/docs/accelerator/get-started/
 
 ### Outsourcer (Raspberry Pi)
-Install all required python dependencies. Installing open-cv can be done with this guide: https://qengineering.eu/install-opencv-4.2-on-raspberry-pi-4.html
+The Outsourcer only relies on the outsourcer folder. Copy it to your Raspberry Pi and install all required python dependencies. Installing open-cv can be done with this guide: https://qengineering.eu/install-opencv-4.2-on-raspberry-pi-4.html
 
 
 
