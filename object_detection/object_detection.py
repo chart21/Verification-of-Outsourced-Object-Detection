@@ -78,7 +78,7 @@ class Model:
         _, self.model_height, self.model_width, _ = self.model_interpreter.get_input_details()[0]['shape']
         self.update_tensor = self.model_interpreter.get_tensor(self.model_interpreter.get_input_details()[0]['index'])
         _, _, _, self.model_channel = self.update_tensor.shape
-        print('RPi Stream -> Coral TPU Model Loaded: ' + model_file_path)
+        print('Coral TPU Model Loaded: ' + model_file_path)
 
     def load_labels(self, label_file_path):
         """
@@ -92,7 +92,7 @@ class Model:
                 splits = line.strip().split('  ', 2)
                 self.labels[int(splits[0])] = splits[1]
                 line = opened_file.readline()
-        print('RPi Stream -> Labels Loaded: ' + label_file_path)
+        print('Labels Loaded: ' + label_file_path)
 
     def load_image_pil_backend(self, image):
         """
