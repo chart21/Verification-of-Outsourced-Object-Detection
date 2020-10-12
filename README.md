@@ -53,6 +53,7 @@ Contract violations are distinguished between (1) Quality of Experience (QoE) Vi
 
 
 ### Malicious Behaviors
+#### Outsourcer perspective
 1. Merkle Tree is built on responses unequal to responses of the Verifier
 2. Contractor output and Verifier sample are not equal
 
