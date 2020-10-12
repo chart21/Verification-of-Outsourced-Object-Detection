@@ -57,7 +57,7 @@ Contract violations are distinguished between (1) Quality of Experience (QoE) Vi
 1. Merkle Tree is built on responses unequal to responses of the Verifier
 2. Contractor output and Verifier sample are not equal
 
-By changing **parameters.py** you can modify the thresholds of QOE violations. 
+By changing **parameters.py** you can modify the thresholds of QoE violations. 
 
 ## Getting Started
 
@@ -158,7 +158,7 @@ save_model.py:
 ## Execution
 After all machines are set up and at least one model is saved we can start executing the program. First, open **parameters.py** and change IPs according to the local IPs of your machines. You can also make changes to the model used, whether you want to use Merkle Trees, sampling intervals, maximum allowed loss rates, and much more. Note that OutsourceContract and VerifierContract have to be identical on your machine running the Outsourcer and your machines running the Contractor and the Verifier respectively.
 
-Afterward, you can start **Outsourcer.py** on the Raspberry Pi and either **Contractor.py**, **Contractor_EdgeTpu.py**, **Contractor_with_multithreading.py**, or **Contractor_EdgeTpu_with_multithreading.py** depending on which version you want to use.
+Afterward, you can start **Outsourcer.py** on the Raspberry Pi and either **Contractor.py**, **Contractor_EdgeTpu.py**, **Contractor_with_multithreading.py**, or **Contractor_EdgeTpu_with_multithreading.py** on the other two machines, depending on which version you want to use. Note that the machine running the Verifier also uses one of the above-listed contractor scripts, but you have to specify in **parameters.py** that it should behave as a Verifier.
 
 If everything was set up correctly, the Outsourcer will start sending a live webcam image stream to the Contractor and sample images to the Verifier. Verifier and Contractor will send back object detection results. All messages sent between machines are signed by the sending entity and verified by the receiving entity using ED25519 signatures of message content, SHA3-256 hash of Verifier Contract or Outsource Contract, and additional information depending on the setup. You can cancel the contract according to custom if you press **q** in the CV2 output window of Verifier or Contractor.  
 
