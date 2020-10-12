@@ -45,6 +45,7 @@ def main(_argv):
         model_to_use = VerifierContract.model
         tiny = VerifierContract.tiny       
         merkle_tree_interval = 0
+        
 
 
     port = Parameters.port_outsourcer

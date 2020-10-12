@@ -211,6 +211,13 @@ class ThreadHandler:
         sk = SigningKey(Parameters.private_key_self)
         dont_show = Parameters.dont_show
 
+        if Parameters.is_contractor == True:
+            display_name = 'Contractor'
+        else:
+            display_name = 'Verifier'
+
+    
+
         responder = re.Responder(hostname, sendingPort)
 
         if merkle_tree_interval > 0:
@@ -355,7 +362,7 @@ class ThreadHandler:
                     # image.show()
 
                 image = cv2.cvtColor(np.array(image), cv2.COLOR_BGR2RGB)
-                cv2.imshow('raspberrypi', image)
+                cv2.imshow(display_name, image)
 
                 if cv2.waitKey(1) == ord('q'):
                     responder.respond('abort12345:6')                    

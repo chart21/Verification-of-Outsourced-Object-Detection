@@ -193,6 +193,11 @@ class ThreadHandler:
         render = Render()
         
         responder = re.Responder(hostname, sendingPort)
+        
+        if Parameters.is_contractor == True:
+            display_name = 'Contractor'
+        else:
+            display_name = 'Verifier'
 
 
 
@@ -344,7 +349,7 @@ class ThreadHandler:
             if not dont_show:              
 
              
-                cv2.imshow('raspberrypi', decompressedImage)
+                cv2.imshow(display_name, decompressedImage)
 
                 if cv2.waitKey(1) == ord('q'):
                     responder.respond('abort12345:6')                    

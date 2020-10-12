@@ -49,12 +49,14 @@ def main(_argv):
         model_to_use = OutsourceContract.model
         tiny = OutsourceContract.tiny
         merkle_tree_interval = OutsourceContract.merkle_tree_interval
+        display_name = 'Contractor'
     else:
         vk = VerifyKey(VerifierContract.public_key_outsourcer)
         contractHash = Helperfunctions.hashVerifierContract().encode('latin1')
         model_to_use = VerifierContract.model
         tiny = VerifierContract.tiny
         merkle_tree_interval = 0
+        display_name = 'Verifier'
 
     sk = SigningKey(Parameters.private_key_self)
 
@@ -412,7 +414,7 @@ def main(_argv):
         if not dont_show:
 
             image = cv2.cvtColor(np.array(image), cv2.COLOR_BGR2RGB)
-            cv2.imshow('raspberrypi', image)
+            cv2.imshow(display_name, image)
 
             if cv2.waitKey(1) == ord('q'):
                 responder.respond('abort12345:6')
