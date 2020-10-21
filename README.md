@@ -178,9 +178,9 @@ Donwload this image for higher quality
 
 
 ### With multithreading of key tasks
-<p align="center"><img src="diagrams/Software Architecture Multi-threaded.pdf"\></p>
-![Image of Yaktocat](https://octodex.github.com/images/yaktocat.png)
-Donwload this image for higher quality
+<p align="center"><img src="diagrams/Software Architecture Multi-threaded.png"\></p>
+
+Donwload for higher quality: https://github.com/chart21/Verification-of-Outsourced-Object-Detection/tree/master/diagrams
 
 ### Without multithreading of key tasks using a Coral USB Accelerator
 <p align="center"><img src="diagrams/Software Architecture Multi-threaded EdgeTpu.jpg"\></p>
