@@ -2,13 +2,13 @@
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE)
 
 
-This project lets you send a digitally signed image stream from an Outsourcer (Raspberry pi) to two machines in the local network. One remote machine acts as a Contractor and the other one acts as a Verifier. The Contractor receives all images while the Outsourcer only receives random samples. Whenever the Contractor and the Verifier send back a signed object detection result belonging to the same image, the Outsourcer checks if both results are equal. At the end of a contract, signatures can be used as a proof to redeem payment or to convict a party of cheating.
+This project lets you send a digitally signed image stream from an Outsourcer (Raspberry pi) to two machines in the local network. One remote machine acts as a Contractor and the other one acts as a Verifier. The Contractor receives all images while the Outsourcer only receives random samples. Whenever the Contractor and the Verifier send back a signed object detection result belonging to the same image, the Outsourcer checks if both results are equal. At the end of a contract, signed messages can be used as a proof to redeem payment or to convict a party of cheating.
 
  Supported models for object detection on a regular GPU and CPU are Yolov4 and Yolov3 using Tensorflow, TFLite, and TensorRT (only deterministic) as the framework. Tiny weights and custom weights can be used as well.
  
  The supported model for object detection on a Coral USB Accelerator is Mobilenet SSD V2.
 
- When executing the multithreading version of the scripts, adding signatures to images and responses should not increase the processing time at all as inference is usually the bottleneck of the setup.   
+ The verification scheme takes less than one millisecond per frame even on low-end hardware, which is mainly caused by signing all messages sent and verifying all messages received. When executing the multithreading version of the scripts, adding signatures to images and responses should not increase the overall processing time at all as inference is usually the bottleneck of the setup. 
 
 
 
@@ -33,7 +33,7 @@ Donwload this GIF if you want to see the statistics printed in the consoles.
 
 
 ## Supported Contract Violations
-Contract violations are distinguished between (1) Quality of Service (QoS) Violations due to timeouts, or not receiving/acknowledging enough outputs, and (2) Malicious Behavior. Consequences of QOS violations can be blacklisting, and bad reviews (if Merkle Trees are used also refusing payment of last interval). Consequences of malicious behavior can be fines, and refusal of payment. Every party that is accused of malicious behavior has the right to contest if additional Verifiers are available within a deadline.
+Contract violations are distinguished between (1) Quality of Service (QoS) Violations due to timeouts, or not receiving/acknowledging enough outputs, and (2) Dishonest Behavior. Consequences of QOS violations can be blacklisting, and bad reviews (if Merkle Trees are used also refusing payment of last interval). Consequences of malicious behavior can be fines, and refusal of payment. Every party that is accused of dishonest behavior has the right to contest if additional Verifiers are available within a deadline.
 
 
 ### Qos Violations
