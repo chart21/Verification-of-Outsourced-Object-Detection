@@ -7,16 +7,18 @@ class OutsourceContract:
     contract_uid = 0 #contracts have to have a unique id to esnure that each contract hash is unique
     public_key_outsourcer = b'e\x0fy\xfd\xe6\x16\x1f\xe0\x16B\xf2\xdb\x1d\x7f\xc9\xbcLCo\xa7\xa6c\x17\xbf\x8fo\xc8[\x07|bL'
     public_key_contractor = b'\xe9\x919rce\xc9\x1a\xcfJ}\xa3\xee\x17q\x19\xbd\x0eu\xf4\xe0\xd5\x8a<\xc0\x81\x0c\xdbD\xf5;G'
-    reward_per_image = 0
-    deposit_outsourcer = 0  #deposit of outsourcer to ensure paying fine and reward is possible
-    deposit_contractor = 0 #deposit of contractor to ensure paying fine
-    fine_outsourcer = 0  #fine if a party is detected cheating
-    fine_contractor = 0
-    model = 'yolov4' #model to use, possible choices are yolov4, yolov3, Edge TPU uses mobilenet SSD v2 automatically instead
+    reward_per_image = 1
+    deposit_outsourcer = 10000000  #deposit of outsourcer to ensure paying fine and reward is possible
+    deposit_contractor = 10000000 #deposit of contractor to ensure paying fine
+    fine_outsourcer = 500000  #fine if a party is detected cheating
+    fine_contractor = 500000
+    bounty_contractor = 250000 #bounty if a oarty decetcs another party cheating
+    bounty_verifier = 250000
+    model = 'yolov4' #model to use, possible choices are yolov4, yolov3
     tiny = True #whether to use tiny weigths for higher performance
-    merkle_tree_interval = 0 # 0: Do not use Merkle Tree but sing every output image, >0: Specifies the intervals at wich a Merkle Tree root is signed and sent
-    criteria = 'all'   #Specifies if all outputs should be sent back or only outputs that fulfill a certain criteria (e.g certain event happens), criterias should be combined with Merkle Trees to maximize efficiency
-    deposit_verfier = 10000000 #verifier details are also set in outsource contract because the contractor creates a list of all available verifier that meet requirements of the outsourcer  
+    merkle_tree_interval = 0 # 0: Do not use Merkle Tree but sign every output image, >0: Specifies the intervals at wich a Merkle Tree root is signed and sent
+    criteria = 'all'   #Specifies if all outputs should be sent back or only outputs that fulfill a certain criteria (e.g certain event happens), criterias should be combined with Merkle Trees to to maximize efficiency
+    deposit_verfier = 10000000 #verifier details are also set in outsource contract because the contractor creates a list of all available verifier that meet requirements of the outsourcer
     fine_verifier = 500000
     reward_per_image_verifier = 1
 
@@ -30,6 +32,7 @@ class VerifierContract:
 
     deposit_verfier = 10000000
     fine_verifier = 500000
+    bounty_verifier = 250000
     reward_per_image_verifier = 1
     
     model = 'yolov4' #model to use, possible choices are yolov4, yolov3
@@ -93,4 +96,11 @@ class Helperfunctions:
     def hashVerifierContract():
        contractHash = hashlib.sha3_256(str(vars(VerifierContract)).encode('latin1'))
        return contractHash.hexdigest()   
+
+    def dishonestResponse(boxtext, sig, sk, contractHash):
+        boxtext += 'Object found: Person'
+        sig = sk.sign(boxtext.encode('latin1') + contractHash).signature
+        sig = sig.decode('latin1')
+
+        return boxtext, sig
 

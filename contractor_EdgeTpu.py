@@ -108,6 +108,7 @@ def main(_argv):
     moving_average_response_signing_time = MovingAverage(moving_average_points)
 
     image_count = 0
+     acknowledged_frames = 0
 
     a = 0
     b = 0
@@ -152,11 +153,12 @@ def main(_argv):
             except:
                 sys.exit(
                     'Contract aborted: Outsourcer signature does not match input. Possible Consquences for Outsourcer: Blacklist, Bad Review')
-
-            if name[-1] < (image_count-2)*minimum_receive_rate_from_contractor:
+            
+            if name[-1] < (image_count-2)*minimum_receive_rate_from_contractor or name[-1] < acknowledged_frames :
                 sys.exit(
                     'Contract aborted: Outsourcer did not acknowledge enough ouputs. Possible Consquences for Outsourcer: Blacklist, Bad Review')
-
+            acknowledged_frames = name[-1]
+        
         else:
             # verify if signature matches image, contract hash, and image count, and number of intervals, and random number
             try:
@@ -166,9 +168,11 @@ def main(_argv):
                 sys.exit(
                     'Contract aborted: Outsourcer signature does not match input. Possible Consquences for Outsourcer: Blacklist, Bad Review')
 
-            if name[-4] < (image_count-2)*minimum_receive_rate_from_contractor:
+            if name[-4] < (image_count-2)*minimum_receive_rate_from_contractor or name[-4] < acknowledged_frames:
                 sys.exit(
                     'Contract aborted: Outsourcer did not acknowledge enough ouputs. Possible Consquences for Outsourcer: Blacklist, Bad Review')
+            
+            acknowledged_frames = name[-4]
 
             outsorucer_signature = name[:-5]
             outsourcer_image_count = name[-5]

@@ -13,7 +13,6 @@ This project lets you send a digitally signed image stream from an Outsourcer (R
 
 
 
-
 ## Demos
 
 ### Object Detection using Yolov4 with CPU/GPU
@@ -27,11 +26,15 @@ Donwload this GIF if you want to see the statistics printed in the consoles.
 Donwload this GIF if you want to see the statistics printed in the consoles.
 <p align="center"><img src="data/demo/EdgeTpu-Setup.gif"\></p>
 
+
+
+
+
 ## Supported Contract Violations
-Contract violations are distinguished between (1) Quality of Experience (QoE) Violations due to timeouts, or not receiving/acknowledging enough outputs, and (2) Malicious Behavior. Consequences of QOE violations can be blacklisting, and bad reviews (if Merkle Trees are used also refusing payment of last interval). Consequences of malicious behavior can be fines, and refusal of payment. Every party that is accused of malicious behavior has the right to contest if additional Verifiers are available within a deadline.
+Contract violations are distinguished between (1) Quality of Service (QoS) Violations due to timeouts, or not receiving/acknowledging enough outputs, and (2) Malicious Behavior. Consequences of QOS violations can be blacklisting, and bad reviews (if Merkle Trees are used also refusing payment of last interval). Consequences of malicious behavior can be fines, and refusal of payment. Every party that is accused of malicious behavior has the right to contest if additional Verifiers are available within a deadline.
 
 
-### QoE Violations
+### Qos Violations
 #### Outsourcer perspective
 1. Contractor did not connect in time
 2. Verifier did not connect in time
@@ -54,10 +57,10 @@ Contract violations are distinguished between (1) Quality of Experience (QoE) Vi
 3. Outsourcer timed out
 
 
-### Malicious Behaviors
+### Dishonest Behaviors
 #### Outsourcer perspective
-1. Merkle Tree is built on responses unequal to responses of the Verifier
-2. Contractor output and Verifier sample are not equal
+1. Merkle Tree of Contractor is built on responses unequal to responses of the Verifier
+2. Contractor response and Verifier sample are not equal
 
 By changing **parameters.py** you can modify the thresholds of QoE violations. 
 
@@ -164,6 +167,48 @@ Afterward, you can start **Outsourcer.py** on the Raspberry Pi and either **Cont
 
 If everything was set up correctly, the Outsourcer will start sending a live webcam image stream to the Contractor and sample images to the Verifier. Verifier and Contractor will send back object detection results. All messages sent between machines are signed by the sending entity and verified by the receiving entity using ED25519 signatures of message content, SHA3-256 hash of Verifier Contract or Outsource Contract, and additional information depending on the setup. You can cancel the contract according to custom if you press **q** in the CV2 output window of Verifier or Contractor.  
 
+## Software Architecture
+All code is written 100% in Python.
+
+### **Contractor.py** and **Contractor_EdgeTpu.py**
+<p align="center"><img src="diagrams/Software Architecture.jpg"\></p>
+
+
+### **Contractor_with_multithreading.py**
+<p align="center"><img src="diagrams/Software Architecture Multi-threaded.jpg"\></p>
+
+
+### **Contractor_EdgeTpu_with_multithreading.py**
+<p align="center"><img src="diagrams/Software Architecture Multi-threaded EdgeTpu.jpg"\></p>
+
+
+## Benchmarks
+
+| Participant | Device                   | CPU           | GPU                   | Model                        | Non-blocking<br>message pattern | Merkle Trees<br>used | Multithreading | Frames per second | Miliseconds per frame | % spent on Network wait | % spent on application processing | % spent on verification scheme | ms spent on verification scheme |
+| ----------- | ------------------------ | ------------- | --------------------- | ---------------------------- | ------------------------------- | -------------------- | -------------- | ----------------- | --------------------- | ----------------------- | --------------------------------- | ------------------------------ | ------------------------------- |
+| Outsourcer  | Raspberry Pi<br>Model 4B |               |                       | Mobilenet SSD V2<br>300\*300 | ✓                               | X                    | X              | 236.00            | 4.24                  | 0.00                    | 78.70                             | 21.30                          | 0.90                            |
+| Outsourcer  | Raspberry Pi<br>Model 4B |               |                       | Mobilenet SSD V2<br>300\*300 | ✓                               | ✓                    | X              | 235.10            | 4.25                  | 0.00                    | 78.40                             | 21.60                          | 0.92                            |
+| Outsourcer  | Raspberry Pi<br>Model 4B |               |                       | Yolov4 tiny<br>416\*416      | ✓                               | X                    | X              | 135.60            | 7.37                  | 0.00                    | 81.10                             | 18.90                          | 1.39                            |
+| Outsourcer  | Raspberry Pi<br>Model 4B |               |                       | Yolov4 tiny<br>416\*416      | ✓                               | ✓                    | X              | 146.90            | 6.81                  | 0.00                    | 85.10                             | 14.90                          | 1.01                            |
+|             |                          |               |                       |                              |                                 |                      |                |                   |                       |                         |                                   |                                |                                 |
+| Contractor  | Desktop PC               | Core i7 3770K | GTX 970               | Yolov4 tiny<br>416\*416      | ✓                               | X                    | X              | 46.62             | 21.45                 | 0.00                    | 98.30                             | 1.70                           | 0.36                            |
+| Contractor  | Desktop PC               | Core i7 3770K | GTX 970               | Yolov4 tiny<br>416\*416      | ✓                               | ✓                    | X              | 46.22             | 21.64                 | 0.00                    | 98.60                             | 1.40                           | 0.30                            |
+| Contractor  | Desktop PC               | Core i7 3770K | GTX 970               | Yolov4 tiny<br>416\*416      | ✓                               | X                    | ✓              | 68.03             | 14.70                 | 0.00                    | 100.00                            | 0.00                           | 0.00                            |
+| Contractor  | Desktop PC               | Core i7 3770K | GTX 970               | Yolov4 tiny<br>416\*416      | ✓                               | ✓                    | ✓              | 68.06             | 14.69                 | 0.00                    | 100.00                            | 0.00                           | 0.00                            |
+|             |                          |               |                       |                              |                                 |                      |                |                   |                       |                         |                                   |                                |                                 |
+| Contractor  | Desktop PC               | Core i7 3770K | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | ✓                               | X                    | X              | 57.22             | 17.48                 | 0.00                    | 98.10                             | 1.90                           | 0.33                            |
+| Contractor  | Desktop PC               | Core i7 3770K | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | ✓                               | ✓                    | X              | 57.73             | 17.32                 | 0.00                    | 98.50                             | 1.50                           | 0.26                            |
+| Contractor  | Desktop PC               | Core i7 3770K | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | ✓                               | X                    | ✓              | 63.19             | 15.83                 | 0.00                    | 100.00                            | 0.00                           | 0.00                            |
+| Contractor  | Desktop PC               | Core i7 3770K | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | ✓                               | ✓                    | ✓              | 63.59             | 15.73                 | 0.00                    | 100.00                            | 0.00                           | 0.00                            |
+|             |                          |               |                       |                              |                                 |                      |                |                   |                       |                         |                                   |                                |                                 |
+| Contractor  | Notebook                 | Core i5 4300U | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | ✓                               | X                    | ✓              | 49.30             | 20.28                 | 0.00                    | 100.00                            | 0.00                           | 0.00                            |
+| Contractor  | Notebook                 | Core i5 4300U | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | ✓                               | ✓                    | ✓              | 49.26             | 20.30                 | 0.00                    | 100.00                            | 0.00                           | 0.00                            |
+|             |                          |               |                       |                              |                                 |                      |                |                   |                       |                         |                                   |                                |                                 |
+| Verifier    | Notebook                 | Core i5 4300U | \-                    | Yolov4 tiny<br>416\*416      | X                               | X                    | X              | 6.73              | 148.50                | 10.10                   | 89.50                             | 0.40                           | 0.59                            |
+| Verifier    | Notebook                 | Core i5 4300U | \-                    | Yolov4 tiny<br>416\*416      | X                               | X                    | ✓              | 6.74              | 148.35                | ?                       | 81.20                             | ?                              | ?                               |
+|             |                          |               |                       |                              |                                 |                      |                |                   |                       |                         |                                   |                                |                                 |
+| Verifier    | Notebook                 | Core i5 4300U | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | X                               | X                    | X              | 28.48             | 35.11                 | 31.20                   | 67.50                             | 1.30                           | 0.46                            |
+| Verifier    | Notebook                 | Core i5 4300U | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | X                               | X                    | ✓              | 28.75             | 34.78                 | ?                       | 0.64                              | ?                              | ?    
 
 
 ## References  

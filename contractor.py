@@ -39,6 +39,8 @@ except:
     pass
 
 
+
+
 def main(_argv):
 
     # get paramters and contract details
@@ -127,6 +129,8 @@ def main(_argv):
 
     image_count = 0
 
+    acknowledged_frames = 0
+
     a = 0
     b = 0
 
@@ -173,9 +177,10 @@ def main(_argv):
                 sys.exit(
                     'Contract aborted: Outsourcer signature does not match input. Possible Consquences for Outsourcer: Blacklist, Bad Review')
 
-            if name[-1] < (image_count-2)*minimum_receive_rate_from_contractor:
+            if name[-1] < (image_count-2)*minimum_receive_rate_from_contractor or name[-1] < acknowledged_frames :
                 sys.exit(
                     'Contract aborted: Outsourcer did not acknowledge enough ouputs. Possible Consquences for Outsourcer: Blacklist, Bad Review')
+            acknowledged_frames = name[-1]
 
         else:
             # verify if signature matches image, contract hash, and image count, and number of intervals, and random number
@@ -186,9 +191,11 @@ def main(_argv):
                 sys.exit(
                     'Contract aborted: Outsourcer signature does not match input. Possible Consquences for Outsourcer: Blacklist, Bad Review')
 
-            if name[-4] < (image_count-2)*minimum_receive_rate_from_contractor:
+            if name[-4] < (image_count-2)*minimum_receive_rate_from_contractor or name[-4] < acknowledged_frames:
                 sys.exit(
                     'Contract aborted: Outsourcer did not acknowledge enough ouputs. Possible Consquences for Outsourcer: Blacklist, Bad Review')
+            
+            acknowledged_frames = name[-4]
 
             outsorucer_signature = name[:-5]
             outsourcer_image_count = name[-5]
@@ -310,6 +317,9 @@ def main(_argv):
         else:
             boxtext = 'Image' + str(outsourcer_image_count) + ':;' + boxtext
 
+
+        #boxtext += "Object found: Person" #dishonest
+
         image_postprocessing_time = time.perf_counter()
 
         if merkle_tree_interval == 0:
@@ -318,7 +328,12 @@ def main(_argv):
 
             # send reply
 
+            
+
+
             responder.respond(boxtext + ';--' + sig)
+
+            
 
         else:
             mt.add_leaf(boxtext, True)  # add leafs dynamiclly to merkle tree
@@ -334,12 +349,17 @@ def main(_argv):
                 mt.make_tree()
                 merkle_root = mt.get_merkle_root()
 
+                #merkle_root = mt.get_leaf(0) #dishonest
+
+
                 sig = sk.sign(merkle_root.encode(
                     'latin1') + bytes(interval_count) + contractHash).signature  # sign merkle root
 
                 # resond with merkle root
                 response += ';--' + str(merkle_root) + \
                     ';--' + sig.decode('latin1')
+
+                
 
                 interval_count += 1
                 mtOld = mt  # save old merkle tree for challenge
@@ -522,6 +542,10 @@ def main(_argv):
 
         # counter
         image_count += 1
+
+
+
+
 
 
 if __name__ == '__main__':

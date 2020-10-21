@@ -85,6 +85,7 @@ class ThreadHandler:
 
     def _run2(self, merkle_tree_interval, contractHash, minimum_receive_rate_from_contractor, vk_Bytes, input_size):
         vk = VerifyKey(vk_Bytes)
+        acknowledged_frames = 0
         while not self._stop:
             name, compressed = self.receive()
 
@@ -120,10 +121,10 @@ class ThreadHandler:
                         sys.exit(self._stop_message)
                 
 
-                if name[-1] < (self._image_count-2)*minimum_receive_rate_from_contractor:
+                if name[-1] < (self._image_count-2)*minimum_receive_rate_from_contractor or name[-1] < acknowledged_frames:
                     sys.exit(
                         'Contract aborted: Outsourcer did not acknowledge enough ouputs. Possible Consquences for Outsourcer: Blacklist, Bad Review')
-
+                acknowledged_frames = name[-1]
             else:
                 # verify if signature matches image, contract hash, and image count, and number of intervals, and random number
                 try:
@@ -138,10 +139,10 @@ class ThreadHandler:
                         print(self._stop_message)
                         sys.exit(self._stop_message)
 
-                if name[-4] < (self._image_count-2)*minimum_receive_rate_from_contractor:
+                if name[-4] < (self._image_count-2)*minimum_receive_rate_from_contractor or name[-4] < acknowledged_frames:
                     sys.exit(
                         'Contract aborted: Outsourcer did not acknowledge enough ouputs. Possible Consquences for Outsourcer: Blacklist, Bad Review')
-
+                acknowledged_frames = name[-4]
             # image preprocessing
 
         # region
