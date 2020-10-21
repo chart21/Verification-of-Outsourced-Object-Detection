@@ -179,6 +179,7 @@ Donwload this image for higher quality
 
 ### With multithreading of key tasks
 <p align="center"><img src="diagrams/Software Architecture Multi-threaded.pdf"\></p>
+![Image of Yaktocat](https://octodex.github.com/images/yaktocat.png)
 Donwload this image for higher quality
 
 ### Without multithreading of key tasks using a Coral USB Accelerator
