@@ -189,7 +189,7 @@ All code is written 100% in Python. Download images for higher quality: https://
 
 
 
-![](diagrams/Software%20Architecture%20Multi-threaded%20EdgeTpu%20(1).png)
+
 
 
 
@@ -214,7 +214,7 @@ All code is written 100% in Python. Download images for higher quality: https://
 
 ### Additional Benchmarks
 
-| Participant | Device                   | CPU           | GPU                   | Model                        | Non-blocking<br>message pattern | Merkle Trees<br>used | Multithreading | Frames per second | Miliseconds per frame | % spent on Network wait | % spent on application processing | % spent on verification scheme | ms spent on verification scheme |
+| Participant | Device                   | CPU           | GPU                   | Model                        | Non-blocking<br>message pattern | Merkle Trees<br>used | Multithreading | Frames per second | Milliseconds per frame | % spent on Network wait | % spent on application processing | % spent on verification scheme | ms spent on verification scheme |
 | ----------- | ------------------------ | ------------- | --------------------- | ---------------------------- | ------------------------------- | -------------------- | -------------- | ----------------- | --------------------- | ----------------------- | --------------------------------- | ------------------------------ | ------------------------------- |
 | Outsourcer  | Raspberry Pi<br>Model 4B |               |                       | Mobilenet SSD V2<br>300\*300 | ✓                               | X                    | X              | 236.00            | 4.24                  | 0.00                    | 78.70                             | 21.30                          | 0.90                            |
 | Outsourcer  | Raspberry Pi<br>Model 4B |               |                       | Mobilenet SSD V2<br>300\*300 | ✓                               | ✓                    | X              | 235.10            | 4.25                  | 0.00                    | 78.40                             | 21.60                          | 0.92                            |
