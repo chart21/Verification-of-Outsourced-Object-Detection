@@ -172,16 +172,16 @@ If everything was set up correctly, the Outsourcer will start sending a live web
 ## Software Architecture
 All code is written 100% in Python.
 
-### Without multi-threading of key tasks
+### Without multithreading of key tasks
 <p align="center"><img src="diagrams/Software Architecture.jpg"\></p>
 Donwload this image for higher quality
 
 
-### With multi-threading of key tasks
-<p align="center"><img src="diagrams/Software Architecture Multi-threaded.jpg"\></p>
+### With multithreading of key tasks
+<p align="center"><img src="diagrams/Software Architecture Multi-threaded.pdf"\></p>
 Donwload this image for higher quality
 
-### Without multi-threading of key tasks using a Coral USB Accelerator
+### Without multithreading of key tasks using a Coral USB Accelerator
 <p align="center"><img src="diagrams/Software Architecture Multi-threaded EdgeTpu.jpg"\></p>
 Donwload this image for higher quality
 
