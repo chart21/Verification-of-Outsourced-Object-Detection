@@ -198,7 +198,7 @@ All code is written 100% in Python. Download images for higher quality: https://
 
 ### Key Results
 
-| Participant | Device                   | CPU           | GPU                   | Model                        | Frames per second | Milliseconds per frame | % spent on Network wait | % spent on application processing | % spent on verification scheme | ms spent on verification scheme |
+| Participant | Device                   | CPU           | GPU                   | Model                        | Frames per second | Milliseconds per frame | % spent on network wait | % spent on application processing | % spent on verification scheme | ms spent on verification scheme |
 | ----------- | ------------------------ | ------------- | --------------------- | ---------------------------- | ----------------- | ---------------------- | ----------------------- | --------------------------------- | ------------------------------ | ------------------------------- |
 | Outsourcer  | Raspberry Pi<br>Model 4B |               |                       | Mobilenet SSD V2<br>300\*300 | 236.00            | 4.24                   | 0.00                    | 78.70                             | 21.30                          | 0.90                            |
 | Outsourcer  | Raspberry Pi<br>Model 4B |               |                       | Yolov4 tiny<br>416\*416      | 146.90            | 6.81                   | 0.00                    | 85.10                             | 14.90                          | 1.01                            |
@@ -214,7 +214,7 @@ All code is written 100% in Python. Download images for higher quality: https://
 
 ### Additional Benchmarks
 
-| Participant | Device                   | CPU           | GPU                   | Model                        | Non-blocking<br>message pattern | Merkle Trees<br>used | Multithreading | Frames per second | Milliseconds per frame | % spent on Network wait | % spent on application processing | % spent on verification scheme | ms spent on verification scheme |
+| Participant | Device                   | CPU           | GPU                   | Model                        | Non-blocking<br>message pattern | Merkle Trees<br>used | Multithreading | Frames per second | Milliseconds per frame | % spent on network wait | % spent on application processing | % spent on verification scheme | ms spent on verification scheme |
 | ----------- | ------------------------ | ------------- | --------------------- | ---------------------------- | ------------------------------- | -------------------- | -------------- | ----------------- | --------------------- | ----------------------- | --------------------------------- | ------------------------------ | ------------------------------- |
 | Outsourcer  | Raspberry Pi<br>Model 4B |               |                       | Mobilenet SSD V2<br>300\*300 | ✓                               | X                    | X              | 236.00            | 4.24                  | 0.00                    | 78.70                             | 21.30                          | 0.90                            |
 | Outsourcer  | Raspberry Pi<br>Model 4B |               |                       | Mobilenet SSD V2<br>300\*300 | ✓                               | ✓                    | X              | 235.10            | 4.25                  | 0.00                    | 78.40                             | 21.60                          | 0.92                            |
@@ -247,6 +247,6 @@ All code is written 100% in Python. Download images for higher quality: https://
    
    https://github.com/theAIGuysCode/yolov4-custom-functions - To run Yolov4 with tensorflow and get formatted outputs
    
-   https://github.com/redlogo/RPi-Stream - To setup a Raspberry Pi image stream and use a Coral Edge Accelerator for inferencing
+   https://github.com/redlogo/RPi-Stream - To setup a Raspberry Pi image stream and use a Coral USB Accelerator for inference
    
    
