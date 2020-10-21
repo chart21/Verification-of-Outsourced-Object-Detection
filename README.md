@@ -182,8 +182,14 @@ All code is written 100% in Python. Download images for higher quality: https://
 
 
 
-### Without multithreading of key tasks using a Coral USB Accelerator
-<p align="center"><img src="diagrams/Software Architecture Multi-threaded EdgeTpu.jpg" width="2400"\></p>
+### With multithreading of key tasks using a Coral USB Accelerator
+<p align="center"><img src="diagrams/Software Architecture Multi-threaded EdgeTpu.jpg"\></p>
+
+
+
+
+
+![](diagrams/Software%20Architecture%20Multi-threaded%20EdgeTpu%20(1).png)
 
 
 
