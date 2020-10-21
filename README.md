@@ -184,6 +184,24 @@ All code is written 100% in Python.
 
 ## Benchmarks
 
+### Key Results
+
+| Participant | Device                   | CPU           | GPU                   | Model                        | Frames per second | Milliseconds per frame | % spent on Network wait | % spent on application processing | % spent on verification scheme | ms spent on verification scheme |
+| ----------- | ------------------------ | ------------- | --------------------- | ---------------------------- | ----------------- | ---------------------- | ----------------------- | --------------------------------- | ------------------------------ | ------------------------------- |
+| Outsourcer  | Raspberry Pi<br>Model 4B |               |                       | Mobilenet SSD V2<br>300\*300 | 236.00            | 4.24                   | 0.00                    | 78.70                             | 21.30                          | 0.90                            |
+| Outsourcer  | Raspberry Pi<br>Model 4B |               |                       | Yolov4 tiny<br>416\*416      | 146.90            | 6.81                   | 0.00                    | 85.10                             | 14.90                          | 1.01                            |
+|             |                          |               |                       |                              |                   |                        |                         |                                   |                                |                                 |
+| Contractor  | Desktop PC               | Core i7 3770K | GTX 970               | Yolov4 tiny<br>416\*416      | 68.06             | 14.69                  | 0.00                    | 100.00                            | 0.00                           | 0.00                            |
+|             |                          |               |                       |                              |                   |                        |                         |                                   |                                |                                 |
+| Contractor  | Desktop PC               | Core i7 3770K | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | 63.59             | 15.73                  | 0.00                    | 100.00                            | 0.00                           | 0.00                            |
+|             |                          |               |                       |                              |                   |                        |                         |                                   |                                |                                 |
+| Contractor  | Notebook                 | Core i5 4300U | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | 49.30             | 20.28                  | 0.00                    | 100.00                            | 0.00                           | 0.00                            |
+|             |                          |               |                       |                              |                   |                        |                         |                                   |                                |                                 |
+| Verifier    | Notebook                 | Core i5 4300U | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | 28.75             | 34.78                  | ?                       | 0.64                              | ?                              | ?                               |
+
+
+### Additional Benchmarks
+
 | Participant | Device                   | CPU           | GPU                   | Model                        | Non-blocking<br>message pattern | Merkle Trees<br>used | Multithreading | Frames per second | Miliseconds per frame | % spent on Network wait | % spent on application processing | % spent on verification scheme | ms spent on verification scheme |
 | ----------- | ------------------------ | ------------- | --------------------- | ---------------------------- | ------------------------------- | -------------------- | -------------- | ----------------- | --------------------- | ----------------------- | --------------------------------- | ------------------------------ | ------------------------------- |
 | Outsourcer  | Raspberry Pi<br>Model 4B |               |                       | Mobilenet SSD V2<br>300\*300 | ✓                               | X                    | X              | 236.00            | 4.24                  | 0.00                    | 78.70                             | 21.30                          | 0.90                            |
