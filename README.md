@@ -19,12 +19,14 @@ This project lets you send a digitally signed image stream from an Outsourcer (R
 <p align="center"><img src="data/helpers/demo.gif"\></p>
 
 ### Whole setup using Yolov4 with CPU/GPU
-Donwload this GIF if you want to see the statistics printed in the consoles.
+
 <p align="center"><img src="data/demo/Yolo-setup.gif"\></p>
+Donwload this GIF if you want to see the statistics printed in the consoles.
 
 ### Whole setup using Mobilenet SSD V2 with Coral Edge USB Accelerator
-Donwload this GIF if you want to see the statistics printed in the consoles.
+
 <p align="center"><img src="data/demo/EdgeTpu-Setup.gif"\></p>
+Donwload this GIF if you want to see the statistics printed in the consoles.
 
 
 
@@ -170,16 +172,18 @@ If everything was set up correctly, the Outsourcer will start sending a live web
 ## Software Architecture
 All code is written 100% in Python.
 
-### **Contractor.py** and **Contractor_EdgeTpu.py**
+### Without multi-threading of key tasks
 <p align="center"><img src="diagrams/Software Architecture.jpg"\></p>
+Donwload this image for higher quality
 
 
-### **Contractor_with_multithreading.py**
+### With multi-threading of key tasks
 <p align="center"><img src="diagrams/Software Architecture Multi-threaded.jpg"\></p>
+Donwload this image for higher quality
 
-
-### **Contractor_EdgeTpu_with_multithreading.py**
+### Without multi-threading of key tasks using a Coral USB Accelerator
 <p align="center"><img src="diagrams/Software Architecture Multi-threaded EdgeTpu.jpg"\></p>
+Donwload this image for higher quality
 
 
 ## Benchmarks
