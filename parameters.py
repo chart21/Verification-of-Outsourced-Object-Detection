@@ -56,7 +56,7 @@ class Parameters:
 
     ip_outsourcer = "192.168.178.34" #Ip address of the outsourcer
     framework = '' #tflite, tfRT, tf
-    minimum_receive_rate_from_contractor = 0.9 #outsourcer has to reecive and acknowledge atleast x% of resonses. Otherwise contract is aborted.
+    minimum_receive_rate_from_contractor = 0.9 #outsourcer has to recive and acknowledge atleast x% of resonses. Otherwise contract is aborted.
     
     # Yolo specific parameters
 
