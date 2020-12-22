@@ -108,7 +108,7 @@ The Outsourcer only relies on the outsourcer folder. Copy it to your Raspberry P
 The Edge TPU model is already contained in this repository because it is only 6MB in size.
 
 YOLOv4 comes pre-trained and able to detect 80 classes. For easy demo purposes, you can use the pre-trained weights.
-Download pre-trained yolov4.weights file: https://drive.google.com/open?id=1cewMfusmPjYWbrnuJRuKhPMwRe_b9PaT
+Download pre-trained yolov4.weights file: https://drive.google.com/openid=1cewMfusmPjYWbrnuJRuKhPMwRe_b9PaT
 
 Copy and paste yolov4.weights from your downloads folder into the 'data' folder of this repository.
 
@@ -209,7 +209,7 @@ All code is written 100% in Python. Download images for higher quality: https://
 |             |                          |               |                       |                              |                   |                        |                         |                                   |                                |                                 |
 | Contractor  | Notebook                 | Core i5 4300U | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | 49.30             | 20.28                  | 0.00                    | 100.00                            | 0.00                           | 0.00                            |
 |             |                          |               |                       |                              |                   |                        |                         |                                   |                                |                                 |
-| Verifier    | Notebook                 | Core i5 4300U | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | 28.75             | 34.78                  | ?                       | 0.64                              | ?                              | ?                               |
+| Verifier    | Notebook                 | Core i5 4300U | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | 28.75             | 34.78                  | -                       | 0.64                              | -                              | -                               |
 
 
 ### Additional Benchmarks
@@ -235,10 +235,10 @@ All code is written 100% in Python. Download images for higher quality: https://
 | Contractor  | Notebook                 | Core i5 4300U | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | ✓                               | ✓                    | ✓              | 49.26             | 20.30                 | 0.00                    | 100.00                            | 0.00                           | 0.00                            |
 |             |                          |               |                       |                              |                                 |                      |                |                   |                       |                         |                                   |                                |                                 |
 | Verifier    | Notebook                 | Core i5 4300U | \-                    | Yolov4 tiny<br>416\*416      | X                               | X                    | X              | 6.73              | 148.50                | 10.10                   | 89.50                             | 0.40                           | 0.59                            |
-| Verifier    | Notebook                 | Core i5 4300U | \-                    | Yolov4 tiny<br>416\*416      | X                               | X                    | ✓              | 6.74              | 148.35                | ?                       | 81.20                             | ?                              | ?                               |
+| Verifier    | Notebook                 | Core i5 4300U | \-                    | Yolov4 tiny<br>416\*416      | X                               | X                    | ✓              | 6.74              | 148.35                | -                       | 81.20                             | -                              | -                               |
 |             |                          |               |                       |                              |                                 |                      |                |                   |                       |                         |                                   |                                |                                 |
 | Verifier    | Notebook                 | Core i5 4300U | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | X                               | X                    | X              | 28.48             | 35.11                 | 31.20                   | 67.50                             | 1.30                           | 0.46                            |
-| Verifier    | Notebook                 | Core i5 4300U | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | X                               | X                    | ✓              | 28.75             | 34.78                 | ?                       | 0.64                              | ?                              | ?    
+| Verifier    | Notebook                 | Core i5 4300U | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | X                               | X                    | ✓              | 28.75             | 34.78                 | -                       | 0.64                              | -                              | -    
 
 
 ## References  
