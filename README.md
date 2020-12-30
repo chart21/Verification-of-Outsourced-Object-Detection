@@ -35,6 +35,7 @@ Download this GIF if you want to see the statistics printed in the consoles.
 ## Supported Contract Violations
 Contract violations are distinguished between (1) Quality of Service (QoS) Violations due to timeouts, or not receiving/acknowledging enough outputs, and (2) Dishonest Behavior. Consequences of QoS violations can be blacklisting and bad reviews. Consequences of dishonest behavior can be fines and refusal of payment. Every party accused of dishonest behavior has the right to contest if additional Verifiers are available within a deadline. Our verification scheme predicts or detects 11 different types of protocol violations with high confidence:
 
+
 | Type of Violation                | Refered Number | Description                                                                   | Techniques                                                                          | Confidence                                             |
 | -------------------------------- | -------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | Dishonest Behavior by Individual | 1              | Contractor sends back false responses to save resources                       | Sampling-based re-execution, utilization of a third party Verifier if required      | \>99% (small sampling size)/ 100% (sampling rate of 1) |
@@ -48,6 +49,9 @@ Contract violations are distinguished between (1) Quality of Service (QoS) Viola
 |                                  | 9              | Low Response Rate                                                             | Same as Nr. 8                                                                       | 100%                                                   |
 |                                  | 10             | High Response Time                                                            | Same as Nr. 8                                                                       | 100%                                                   |
 | External Threat                  | 11             | Message Tampering                                                             | Digital Signatures                                                                  | 100%                                                   |
+
+
+
 
 To detect dishoenst behavior or QoS violations our scripts perform the following checks during execution.
 
