@@ -2,13 +2,13 @@
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE)
 
 
-This project lets you send a digitally signed image stream from an Outsourcer (Raspberry pi) to two machines in the local network. One remote machine acts as a Contractor and the other one acts as a Verifier. The Contractor receives all images while the Outsourcer only receives random samples. Whenever the Contractor and the Verifier send back a signed object detection result belonging to the same image, the Outsourcer checks if both results are equal. At the end of a contract, signed messages can be used as a proof to redeem payment or to convict a party of cheating.
+This project lets you send a digitally signed image stream from an Outsourcer (Raspberry pi) to two machines in the local network. One remote machine acts as a Contractor, and the other one acts as a Verifier. The Contractor receives all images, while the Outsourcer only receives random samples. Whenever the Contractor and the Verifier send back a signed object detection result belonging to the same image, the Outsourcer checks if both results are equal. At the end of a contract, signed messages can be used as proof to redeem payment or to convict a party of cheating.
 
  Supported models for object detection on a regular GPU and CPU are Yolov4 and Yolov3 using Tensorflow, TFLite, and TensorRT (only deterministic) as the framework. Tiny weights and custom weights can be used as well.
  
  The supported model for object detection on a Coral USB Accelerator is Mobilenet SSD V2.
 
- The verification scheme takes less than one millisecond per frame even on low-end hardware, which is mainly caused by signing all messages sent and verifying all messages received. When executing the multithreading version of the scripts, adding signatures to images and responses should not increase the overall processing time at all as inference is usually the bottleneck of the setup. 
+The verification scheme takes less than one millisecond per frame, even on low-end hardware, mainly caused by signing all messages sent and verifying all messages received. When executing the multithreading version of the scripts, adding signatures to images and responses should not increase the overall processing time at all as inference is usually the bottleneck of the setup. 
 
 
 
@@ -21,19 +21,19 @@ This project lets you send a digitally signed image stream from an Outsourcer (R
 ### Whole setup using Yolov4 with CPU/GPU
 
 <p align="center"><img src="data/demo/Yolo-setup.gif"\></p>
-Donwload this GIF if you want to see the statistics printed in the consoles.
+Download this GIF if you want to see the statistics printed in the consoles.
 
 ### Whole setup using Mobilenet SSD V2 with Coral Edge USB Accelerator
 
 <p align="center"><img src="data/demo/EdgeTpu-Setup.gif"\></p>
-Donwload this GIF if you want to see the statistics printed in the consoles.
+Download this GIF if you want to see the statistics printed in the consoles.
 
 
 
 
 
 ## Supported Contract Violations
-Contract violations are distinguished between (1) Quality of Service (QoS) Violations due to timeouts, or not receiving/acknowledging enough outputs, and (2) Dishonest Behavior. Consequences of QOS violations can be blacklisting, and bad reviews (if Merkle Trees are used also refusing payment of last interval). Consequences of malicious behavior can be fines, and refusal of payment. Every party that is accused of dishonest behavior has the right to contest if additional Verifiers are available within a deadline.
+Contract violations are distinguished between (1) Quality of Service (QoS) Violations due to timeouts, or not receiving/acknowledging enough outputs, and (2) Dishonest Behavior. Consequences of QoS violations can be blacklisting and bad reviews. Consequences of dishonest behavior can be fines and refusal of payment. Every party accused of dishonest behavior has the right to contest if additional Verifiers are available within a deadline.
 
 
 ### Qos Violations
@@ -42,19 +42,19 @@ Contract violations are distinguished between (1) Quality of Service (QoS) Viola
 2. Verifier did not connect in time
 3. Contractor response is ill formated
 4. Verifier response is ill formated
-5. Contractor signature does not match response
-6. Verifier signature does not match response
+5. Contractor signature does not match its response
+6. Verifier signature does not match its response
 7. Contractor response delay rate is too high
 8. Verifier has failed to process enough samples in time
-9. No root hash received for current interval in time
+9. No root hash received for the current interval in time
 10. Merkle tree leaf node does not match earlier sent response
-11. Contractor signature of challenge response is incorrect
+11. Contractor signature of challenge-response is incorrect
 12. Leaf is not contained in Merkle Tree
-13. Contractor signature of root hash received at challenge response does not match previous signed root hash
+13. Contractor signature of root hash received at challenge response does not match previously signed root hash
 14. Merkle Tree proof of membership challenge-response was not received in time
 
 #### Contractor/Verifier perspective
-1. Outsourcer signature does not match input
+1. Outsourcer signature does not match the input
 2. Outsourcer did not acknowledge enough outputs
 3. Outsourcer timed out
 
@@ -91,7 +91,7 @@ pip install -r requirements.txt
 pip install -r requirements-gpu.txt
 ```
 #### Nvidia Driver (For GPU, if you are not using Conda Environment and haven't set up CUDA yet)
-Make sure to use CUDA Toolkit version 10.1 as it is the proper version for the TensorFlow version used in this repository.
+Make sure to use CUDA Toolkit version 10.1 as it is the correct version for the TensorFlow version used in this repository.
 https://developer.nvidia.com/cuda-10.1-download-archive-update2
 
 
@@ -125,7 +125,7 @@ Update the code to point at your custom .names file as seen below. (my custom .n
 <strong>Note:</strong> If you are using the pre-trained yolov4 then make sure that line 14 remains <strong>coco.names</strong>.
 
 ### YOLOv4 Using Tensorflow (tf, .pb model)
-To implement YOLOv4 using TensorFlow, first we convert the .weights into the corresponding TensorFlow model files and then run the model.
+To implement YOLOv4 using TensorFlow, first, we convert the .weights into the corresponding TensorFlow model files and then run the model.
 
 #### Convert darknet weights to tensorflow
 ##### yolov4
@@ -163,7 +163,7 @@ save_model.py:
   ```
 
 ## Execution
-After all machines are set up and at least one model is saved we can start executing the program. First, open **parameters.py** and change IPs according to the local IPs of your machines. You can also make changes to the model used, whether you want to use Merkle Trees, sampling intervals, maximum allowed loss rates, and much more. Note that OutsourceContract and VerifierContract have to be identical on your machine running the Outsourcer and your machines running the Contractor and the Verifier respectively.
+After all machines are set up, and at least one model is saved, you can start executing the program. First, open **parameters.py** and change IPs according to the local IPs of your machines. You can also make changes to the model used, whether you want to use Merkle Trees, sampling intervals, maximum allowed loss rates, and much more. Note that OutsourceContract and VerifierContract have to be identical on your machine running the Outsourcer and your machines running the Contractor and the Verifier, respectively.
 
 Afterward, you can start **Outsourcer.py** on the Raspberry Pi and either **Contractor.py**, **Contractor_EdgeTpu.py**, **Contractor_with_multithreading.py**, or **Contractor_EdgeTpu_with_multithreading.py** on the other two machines, depending on which version you want to use. Note that the machine running the Verifier also uses one of the above-listed contractor scripts, but you have to specify in **parameters.py** that it should behave as a Verifier.
 
@@ -245,8 +245,8 @@ All code is written 100% in Python. Download images for higher quality: https://
 
    This repository re-uses components of the following existing repositories:
    
-   https://github.com/theAIGuysCode/yolov4-custom-functions - To run Yolov4 with tensorflow and get formatted outputs
+   https://github.com/theAIGuysCode/yolov4-custom-functions - To run Yolov4 with TensorFlow and get formatted outputs
    
-   https://github.com/redlogo/RPi-Stream - To setup a Raspberry Pi image stream and use a Coral USB Accelerator for inference
+   https://github.com/redlogo/RPi-Stream - To set up a Raspberry Pi image stream and use a Coral USB Accelerator for inference
    
    
