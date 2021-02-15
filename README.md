@@ -191,7 +191,7 @@ If everything was set up correctly, the Outsourcer will start sending a live web
 All code is written 100% in Python. Download images for higher quality: https://github.com/chart21/Verification-of-Outsourced-Object-Detection/tree/master/diagrams
 
 ### Without multithreading of key tasks
-<p align="center"><img src="diagrams/Software Architecture.pdf"\></p>
+<p align="center"><img src="diagrams/Software Architecture.jpg"\></p>
 
 
 
