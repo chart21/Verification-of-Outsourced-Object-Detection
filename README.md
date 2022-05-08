@@ -4,11 +4,9 @@
 
 This project lets you send a digitally signed image stream from an Outsourcer (Raspberry pi) to two machines in the local network. One remote machine acts as a Contractor, and the other one acts as a Verifier. The Contractor receives all images, while the Outsourcer only receives random samples. Whenever the Contractor and the Verifier send back a signed object detection result belonging to the same image, the Outsourcer checks if both results are equal. At the end of a contract, signed messages can be used as proof to redeem payment or to convict a party of cheating.
 
- Supported models for object detection on a regular GPU and CPU are Yolov4 and Yolov3 using Tensorflow, TFLite, and TensorRT (only deterministic) as the framework. Tiny weights and custom weights can be used as well.
+Supported models for object detection on a regular GPU and CPU are Yolov4 and Yolov3 using Tensorflow, TFLite, and TensorRT (only deterministic) as the framework. Tiny weights and custom weights can be used as well.
  
  The supported model for object detection on a Coral USB Accelerator is Mobilenet SSD V2.
-
-The verification scheme takes less than one millisecond per frame, even on low-end hardware, mainly caused by signing all messages sent and verifying all messages received. When executing the multithreading version of the scripts, adding signatures to images and responses should not increase the overall processing time at all as inference is usually the bottleneck of the setup. 
 
 
 
@@ -21,12 +19,10 @@ The verification scheme takes less than one millisecond per frame, even on low-e
 ### Whole setup using Yolov4 with CPU/GPU
 
 <p align="center"><img src="data/demo/Yolo-setup.gif"\></p>
-Download this GIF if you want to see the statistics printed in the consoles.
 
 ### Whole setup using Mobilenet SSD V2 with Coral Edge USB Accelerator
 
 <p align="center"><img src="data/demo/EdgeTpu-Setup.gif"\></p>
-Download this GIF if you want to see the statistics printed in the consoles.
 
 
 
@@ -45,10 +41,8 @@ Contract violations are distinguished between (1) Quality of Service (QoS) Viola
 |                                |5             |Participant refuses to pay even if obliged to by the protocol                |TTP or Blockchain that is authorized to conduct payment on behalf of another entity|100%                                                 |
 |Dishonest Behavior via Collusion|6             |Outsourcer and Verifier collude to refuse payment and save resources         |Randomization, Game-theoretic incentives, Contestation                             |100%                                                 |
 |                                |7             |Contractor and Verifier collude to save resources                            |Randomization, Game-theoretic incentives                                           |High confidence                                      |
-|QoS Violation                   |8             |Timeout                                                                      |Blacklisting, Review system,  Contract abortion                                    |100%                                                 |
-|                                |9             |Low Response Rate                                                            |Same as Nr. 8                                                                      |100%                                                 |
-|                                |10            |High Response Time                                                           |Same as Nr. 8                                                                      |100%                                                 |
-|External Threat                 |11            |Message Tampering                                                            |Digital Signatures                                                                 |100%                                                 |
+|QoS Violation                   |8             |Timeouts, Low Response Rate, High Response Time                                                              |Blacklisting, Review system,  Contract abortion                                    |100%                                                 |
+|External Threat                 |10          |Message Tampering                                                            |Digital Signatures                                                                 |100%                                                 |
 
 
 
@@ -202,61 +196,6 @@ All code is written 100% in Python. Download images for higher quality: https://
 
 ### With multithreading of key tasks using a Coral USB Accelerator
 <p align="center"><img src="diagrams/Software Architecture Multi-threaded EdgeTpu.jpg"\></p>
-
-
-
-
-
-
-
-
-
-
-## Benchmarks
-
-### Key Results
-
-| Participant | Device                   | CPU           | GPU                   | Model                        | Frames per second | Milliseconds per frame | % spent on network wait | % spent on application processing | % spent on verification scheme | ms spent on verification scheme |
-| ----------- | ------------------------ | ------------- | --------------------- | ---------------------------- | ----------------- | ---------------------- | ----------------------- | --------------------------------- | ------------------------------ | ------------------------------- |
-| Outsourcer  | Raspberry Pi<br>Model 4B |               |                       | Mobilenet SSD V2<br>300\*300 | 236.00            | 4.24                   | 0.00                    | 78.70                             | 21.30                          | 0.90                            |
-| Outsourcer  | Raspberry Pi<br>Model 4B |               |                       | Yolov4 tiny<br>416\*416      | 146.90            | 6.81                   | 0.00                    | 85.10                             | 14.90                          | 1.01                            |
-|             |                          |               |                       |                              |                   |                        |                         |                                   |                                |                                 |
-| Contractor  | Desktop PC               | Core i7 3770K | GTX 970               | Yolov4 tiny<br>416\*416      | 68.06             | 14.69                  | 0.00                    | 100.00                            | 0.00                           | 0.00                            |
-|             |                          |               |                       |                              |                   |                        |                         |                                   |                                |                                 |
-| Contractor  | Desktop PC               | Core i7 3770K | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | 63.59             | 15.73                  | 0.00                    | 100.00                            | 0.00                           | 0.00                            |
-|             |                          |               |                       |                              |                   |                        |                         |                                   |                                |                                 |
-| Contractor  | Notebook                 | Core i5 4300U | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | 49.30             | 20.28                  | 0.00                    | 100.00                            | 0.00                           | 0.00                            |
-|             |                          |               |                       |                              |                   |                        |                         |                                   |                                |                                 |
-| Verifier    | Notebook                 | Core i5 4300U | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | 28.75             | 34.78                  | -                       | 0.64                              | -                              | -                               |
-
-
-### Additional Benchmarks
-
-| Participant | Device                   | CPU           | GPU                   | Model                        | Non-blocking<br>message pattern | Merkle Trees<br>used | Multithreading | Frames per second | Milliseconds per frame | % spent on network wait | % spent on application processing | % spent on verification scheme | ms spent on verification scheme |
-| ----------- | ------------------------ | ------------- | --------------------- | ---------------------------- | ------------------------------- | -------------------- | -------------- | ----------------- | --------------------- | ----------------------- | --------------------------------- | ------------------------------ | ------------------------------- |
-| Outsourcer  | Raspberry Pi<br>Model 4B |               |                       | Mobilenet SSD V2<br>300\*300 | ✓                               | X                    | X              | 236.00            | 4.24                  | 0.00                    | 78.70                             | 21.30                          | 0.90                            |
-| Outsourcer  | Raspberry Pi<br>Model 4B |               |                       | Mobilenet SSD V2<br>300\*300 | ✓                               | ✓                    | X              | 235.10            | 4.25                  | 0.00                    | 78.40                             | 21.60                          | 0.92                            |
-| Outsourcer  | Raspberry Pi<br>Model 4B |               |                       | Yolov4 tiny<br>416\*416      | ✓                               | X                    | X              | 135.60            | 7.37                  | 0.00                    | 81.10                             | 18.90                          | 1.39                            |
-| Outsourcer  | Raspberry Pi<br>Model 4B |               |                       | Yolov4 tiny<br>416\*416      | ✓                               | ✓                    | X              | 146.90            | 6.81                  | 0.00                    | 85.10                             | 14.90                          | 1.01                            |
-|             |                          |               |                       |                              |                                 |                      |                |                   |                       |                         |                                   |                                |                                 |
-| Contractor  | Desktop PC               | Core i7 3770K | GTX 970               | Yolov4 tiny<br>416\*416      | ✓                               | X                    | X              | 46.62             | 21.45                 | 0.00                    | 98.30                             | 1.70                           | 0.36                            |
-| Contractor  | Desktop PC               | Core i7 3770K | GTX 970               | Yolov4 tiny<br>416\*416      | ✓                               | ✓                    | X              | 46.22             | 21.64                 | 0.00                    | 98.60                             | 1.40                           | 0.30                            |
-| Contractor  | Desktop PC               | Core i7 3770K | GTX 970               | Yolov4 tiny<br>416\*416      | ✓                               | X                    | ✓              | 68.03             | 14.70                 | 0.00                    | 100.00                            | 0.00                           | 0.00                            |
-| Contractor  | Desktop PC               | Core i7 3770K | GTX 970               | Yolov4 tiny<br>416\*416      | ✓                               | ✓                    | ✓              | 68.06             | 14.69                 | 0.00                    | 100.00                            | 0.00                           | 0.00                            |
-|             |                          |               |                       |                              |                                 |                      |                |                   |                       |                         |                                   |                                |                                 |
-| Contractor  | Desktop PC               | Core i7 3770K | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | ✓                               | X                    | X              | 57.22             | 17.48                 | 0.00                    | 98.10                             | 1.90                           | 0.33                            |
-| Contractor  | Desktop PC               | Core i7 3770K | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | ✓                               | ✓                    | X              | 57.73             | 17.32                 | 0.00                    | 98.50                             | 1.50                           | 0.26                            |
-| Contractor  | Desktop PC               | Core i7 3770K | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | ✓                               | X                    | ✓              | 63.19             | 15.83                 | 0.00                    | 100.00                            | 0.00                           | 0.00                            |
-| Contractor  | Desktop PC               | Core i7 3770K | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | ✓                               | ✓                    | ✓              | 63.59             | 15.73                 | 0.00                    | 100.00                            | 0.00                           | 0.00                            |
-|             |                          |               |                       |                              |                                 |                      |                |                   |                       |                         |                                   |                                |                                 |
-| Contractor  | Notebook                 | Core i5 4300U | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | ✓                               | X                    | ✓              | 49.30             | 20.28                 | 0.00                    | 100.00                            | 0.00                           | 0.00                            |
-| Contractor  | Notebook                 | Core i5 4300U | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | ✓                               | ✓                    | ✓              | 49.26             | 20.30                 | 0.00                    | 100.00                            | 0.00                           | 0.00                            |
-|             |                          |               |                       |                              |                                 |                      |                |                   |                       |                         |                                   |                                |                                 |
-| Verifier    | Notebook                 | Core i5 4300U | \-                    | Yolov4 tiny<br>416\*416      | X                               | X                    | X              | 6.73              | 148.50                | 10.10                   | 89.50                             | 0.40                           | 0.59                            |
-| Verifier    | Notebook                 | Core i5 4300U | \-                    | Yolov4 tiny<br>416\*416      | X                               | X                    | ✓              | 6.74              | 148.35                | -                       | 81.20                             | -                              | -                               |
-|             |                          |               |                       |                              |                                 |                      |                |                   |                       |                         |                                   |                                |                                 |
-| Verifier    | Notebook                 | Core i5 4300U | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | X                               | X                    | X              | 28.48             | 35.11                 | 31.20                   | 67.50                             | 1.30                           | 0.46                            |
-| Verifier    | Notebook                 | Core i5 4300U | Coral USB Accelerator | Mobilenet SSD V2<br>300\*300 | X                               | X                    | ✓              | 28.75             | 34.78                 | -                       | 0.64                              | -                              | -    
 
 
 ## References  
