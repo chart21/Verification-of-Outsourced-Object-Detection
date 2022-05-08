@@ -182,7 +182,6 @@ Afterward, you can start **Outsourcer.py** on the Raspberry Pi and either **Cont
 If everything was set up correctly, the Outsourcer will start sending a live webcam image stream to the Contractor and sample images to the Verifier. Verifier and Contractor will send back object detection results. All messages sent between machines are signed by the sending entity and verified by the receiving entity using ED25519 signatures of message content, SHA3-256 hash of Verifier Contract or Outsource Contract, and additional information depending on the setup. You can terminate the contract according to custom if you press **q** in the CV2 output window of Verifier or Contractor.  
 
 ## Software Architecture
-All code is written 100% in Python. Download images for higher quality: https://github.com/chart21/Verification-of-Outsourced-Object-Detection/tree/master/diagrams
 
 ### Without multithreading of key tasks
 <p align="center"><img src="diagrams/Software Architecture.jpg"\></p>
