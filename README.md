@@ -42,7 +42,7 @@ Contract violations are distinguished between (1) Quality of Service (QoS) Viola
 |Dishonest Behavior via Collusion|6             |Outsourcer and Verifier collude to refuse payment and save resources         |Randomization, Game-theoretic incentives, Contestation                             |100%                                                 |
 |                                |7             |Contractor and Verifier collude to save resources                            |Randomization, Game-theoretic incentives                                           |High confidence                                      |
 |QoS Violation                   |8             |Timeouts, Low Response Rate, High Response Time                                                              |Blacklisting, Review system,  Contract abortion                                    |100%                                                 |
-|External Threat                 |10          |Message Tampering                                                            |Digital Signatures                                                                 |100%                                                 |
+|External Threat                 |9          |Message Tampering                                                            |Digital Signatures                                                                 |100%                                                 |
 
 
 
